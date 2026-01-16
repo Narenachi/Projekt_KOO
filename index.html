@@ -15,7 +15,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=Inter:wght@400;700;900&display=swap');
         
-        body { font-family: 'Inter', sans-serif; background-color: #f8faf9; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8faf9; overflow: hidden; /* Blokada przewijania całej strony */ }
         
         /* Czcionka Charm tylko dla nazw sekcji */
         .font-section-title { font-family: 'Charm', cursive; }
@@ -23,12 +23,37 @@
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Styl paneli inspirowany oknem logowania */
+        /* Styl paneli */
         .panel-style {
             background: white;
             border-radius: 50px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
             border-bottom: 12px solid #006B61;
+        }
+        
+        /* Styl guzików zakładek */
+        .tab-button {
+            transition: all 0.3s ease;
+            border-radius: 9999px;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+            padding: 12px 24px;
+        }
+        .tab-button-active {
+            background-color: #006B61;
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 107, 97, 0.3);
+        }
+        .tab-button-inactive {
+            background-color: white;
+            color: #9CA3AF;
+            border: 1px solid #E5E7EB;
+        }
+        .tab-button-inactive:hover {
+            background-color: #f3f4f6;
+            color: #006B61;
         }
 
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -43,22 +68,38 @@
 
         const coordinators = ['Oliwia Giermanowska', 'Klaudia Iwaneczko', 'Emilia Jabłońska', 'Natalia Kopera', 'Anna Metlerska', 'Patrycja Szaton'];
         
-        // --- LINK DO WERSJI 4 ---
+        // --- LINK DO SKRYPTU (Wersja 4) ---
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxfOxVzFw7VPwY88WNySfn2Zo18STi8znNWyp2Rj-WfhYYu_Hg89_du84aaf-oEQkeBzg/exec";
 
         // --- KOMPONENT: PROGRAMY I FUNDACJE ---
         const FundsPage = ({ funds, loading, setShowModal, refreshData }) => {
             const [search, setSearch] = useState('');
-            useEffect(() => { lucide.createIcons(); }, [funds, loading]);
+            const [activeTab, setActiveTab] = useState('fundacje');
+            
+            useEffect(() => { lucide.createIcons(); }, [funds, loading, activeTab]);
 
-            const filtered = funds.filter(f => 
-                [f.name, f.support, f.cancerType, f.stage, f.scope].some(field => 
+            const filtered = funds.filter(f => {
+                const isProgram = f.type && f.type.toLowerCase().includes('program');
+                const matchesTab = activeTab === 'programy' ? isProgram : !isProgram;
+                
+                const matchesSearch = [f.name, f.support, f.cancerType, f.stage, f.scope].some(field => 
                     String(field || '').toLowerCase().includes(search.toLowerCase())
-                )
-            );
+                );
+                
+                return matchesTab && matchesSearch;
+            });
 
             return (
                 <div className="animate-fadeIn space-y-6">
+                    <div className="flex justify-center gap-4 mb-2">
+                        <button onClick={() => setActiveTab('fundacje')} className={`tab-button ${activeTab === 'fundacje' ? 'tab-button-active' : 'tab-button-inactive'}`}>
+                            Fundacje i Stowarzyszenia
+                        </button>
+                        <button onClick={() => setActiveTab('programy')} className={`tab-button ${activeTab === 'programy' ? 'tab-button-active' : 'tab-button-inactive'}`}>
+                            Programy Lekowe / NFZ
+                        </button>
+                    </div>
+
                     <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
                         <div className="flex-1 w-full">
                             <div className="relative">
@@ -76,7 +117,7 @@
                                 <i data-lucide="refresh-cw" className="w-4 h-4"></i> Debuguj
                             </button>
                             <button onClick={() => setShowModal(true)} className="bg-[#006B61] text-white px-8 py-5 rounded-[25px] font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-105 transition-all">
-                                Dodaj fundację
+                                Dodaj wpis
                             </button>
                         </div>
                     </div>
@@ -89,11 +130,11 @@
                     ) : (
                         <div className="space-y-4">
                             {filtered.length === 0 ? (
-                                <p className="text-center py-20 text-gray-300 font-black uppercase tracking-widest italic text-2xl">Brak danych do wyświetlenia</p>
+                                <p className="text-center py-20 text-gray-300 font-black uppercase tracking-widest italic text-2xl">Brak danych w tej kategorii</p>
                             ) : filtered.map((fund, idx) => (
                                 <div key={idx} className="bg-white rounded-[40px] border border-gray-100 p-8 grid grid-cols-1 md:grid-cols-3 gap-8 hover:shadow-md transition-all">
                                     <div className="md:col-span-2">
-                                        <span className="text-[9px] font-black bg-[#C9D9B6] text-[#006B61] px-3 py-1 rounded-full uppercase mb-2 inline-block font-bold">{fund.type || 'Program'}</span>
+                                        <span className="text-[9px] font-black bg-[#C9D9B6] text-[#006B61] px-3 py-1 rounded-full uppercase mb-2 inline-block font-bold">{fund.type || (activeTab === 'programy' ? 'Program' : 'Fundacja')}</span>
                                         <h3 className="text-2xl font-black text-gray-800 mb-4 tracking-tight">{fund.name}</h3>
                                         <div className="grid grid-cols-2 gap-4 text-sm leading-relaxed text-gray-600">
                                             <p><strong className="text-[#006B61] uppercase text-[9px] tracking-widest block mb-1">Zakres wsparcia:</strong> {fund.support || '-'}</p>
@@ -103,15 +144,44 @@
                                         </div>
                                     </div>
                                     <div className="bg-gray-50 p-6 rounded-[35px] space-y-3 flex flex-col justify-center border border-gray-100 text-xs">
-                                        <p className="font-black text-[#006B61] uppercase text-[10px] italic border-b pb-2 mb-2 italic text-left">Kontakt:</p>
-                                        <p className="flex items-center gap-3 font-bold text-gray-700"><i data-lucide="phone" className="w-4 h-4 text-[#408670]"></i> {fund.phone || '-'}</p>
-                                        <p className="flex items-center gap-3 font-bold text-gray-700 truncate"><i data-lucide="mail" className="w-4 h-4 text-[#408670]"></i> {fund.email || '-'}</p>
-                                        <a href={fund.web} target="_blank" className="block text-center bg-[#006B61] text-white p-4 rounded-2xl font-black uppercase text-[9px] mt-2 shadow-lg">WWW</a>
+                                        {(fund.phone || fund.email) && (
+                                            <>
+                                                <p className="font-black text-[#006B61] uppercase text-[10px] italic border-b pb-2 mb-2 italic text-left">Kontakt:</p>
+                                                {fund.phone && <p className="flex items-center gap-3 font-bold text-gray-700"><i data-lucide="phone" className="w-4 h-4 text-[#408670]"></i> {fund.phone}</p>}
+                                                {fund.email && <p className="flex items-center gap-3 font-bold text-gray-700 truncate"><i data-lucide="mail" className="w-4 h-4 text-[#408670]"></i> {fund.email}</p>}
+                                            </>
+                                        )}
+                                        <a href={fund.web} target="_blank" className={`block text-center bg-[#006B61] text-white p-4 rounded-2xl font-black uppercase text-[9px] shadow-lg hover:bg-[#005a52] transition-colors ${(fund.phone || fund.email) ? 'mt-2' : 'h-full flex items-center justify-center text-[11px]'}`}>
+                                            {(fund.phone || fund.email) ? 'Odwiedź stronę internetową' : 'Przejdź do strony programu / NFZ'}
+                                        </a>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     )}
+                </div>
+            );
+        };
+
+        // --- KOMPONENT: HARMONOGRAMY (Z nowymi guzikami) ---
+        const SchedulesPage = () => {
+            const [activeTab, setActiveTab] = useState('koordynatorzy');
+            
+            return (
+                <div className="animate-fadeIn space-y-6">
+                     <div className="flex justify-center gap-4 mb-2">
+                        <button onClick={() => setActiveTab('koordynatorzy')} className={`tab-button ${activeTab === 'koordynatorzy' ? 'tab-button-active' : 'tab-button-inactive'}`}>Koordynatorzy</button>
+                        <button onClick={() => setActiveTab('pacjenci')} className={`tab-button ${activeTab === 'pacjenci' ? 'tab-button-active' : 'tab-button-inactive'}`}>Pacjenci</button>
+                        <button onClick={() => setActiveTab('personel')} className={`tab-button ${activeTab === 'personel' ? 'tab-button-active' : 'tab-button-inactive'}`}>Personel Medyczny</button>
+                    </div>
+                    
+                    <div className="bg-white p-12 rounded-[50px] shadow-sm border border-gray-100 text-center py-32 italic">
+                        <i data-lucide="calendar" className="w-16 h-16 text-[#C9D9B6] mx-auto mb-4"></i>
+                        <p className="text-gray-300 font-black uppercase tracking-[0.2em] text-xl">
+                            Harmonogram: <span className="text-[#006B61]">{activeTab.toUpperCase()}</span>
+                        </p>
+                        <p className="text-gray-200 text-sm mt-2">Moduł w przygotowaniu</p>
+                    </div>
                 </div>
             );
         };
@@ -130,23 +200,27 @@
                 <div className="space-y-10 animate-fadeIn text-sm font-medium text-gray-600">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <section className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
-                            <h2 className="flex items-center gap-2 font-black text-[#006B61] mb-8 uppercase text-[10px] tracking-widest"><i data-lucide="phone" className="w-4 h-4"></i> Połączenia (7 dni)</h2>
+                            <h2 className="flex items-center gap-3 font-black text-[#006B61] mb-8 uppercase text-xs tracking-widest">
+                                <i data-lucide="phone" className="w-5 h-5"></i> Połączenia (7 dni)
+                            </h2>
                             <div className="grid grid-cols-7 gap-2 text-center text-gray-200">
                                 {days.map(day => (
                                     <div key={day} className="border-r last:border-none px-1">
-                                        <p className="text-[9px] font-black text-gray-400 mb-2">{day.substring(0,3)}</p>
-                                        <div className="py-4 italic text-[9px]">0</div>
+                                        <p className="text-[10px] font-black text-gray-400 mb-2">{day.substring(0,3)}</p>
+                                        <div className="py-4 italic text-sm font-bold text-gray-300">0</div>
                                     </div>
                                 ))}
                             </div>
                         </section>
                         <section className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
-                            <h2 className="flex items-center gap-2 font-black text-[#006B61] mb-8 uppercase text-[10px] tracking-widest"><i data-lucide="calendar" className="w-4 h-4"></i> Wizyty (7 dni)</h2>
+                            <h2 className="flex items-center gap-3 font-black text-[#006B61] mb-8 uppercase text-xs tracking-widest">
+                                <i data-lucide="calendar" className="w-5 h-5"></i> Wizyty (7 dni)
+                            </h2>
                             <div className="grid grid-cols-7 gap-2 text-center text-gray-200">
                                 {days.map(day => (
                                     <div key={day} className="border-r last:border-none px-1">
-                                        <p className="text-[9px] font-black text-gray-400 mb-2">{day.substring(0,3)}</p>
-                                        <div className="py-4 italic text-[9px]">0</div>
+                                        <p className="text-[10px] font-black text-gray-400 mb-2">{day.substring(0,3)}</p>
+                                        <div className="py-4 italic text-sm font-bold text-gray-300">0</div>
                                     </div>
                                 ))}
                             </div>
@@ -246,8 +320,11 @@
             const formattedDayName = now.toLocaleDateString('pl-PL', {weekday: 'long'}).charAt(0).toUpperCase() + now.toLocaleDateString('pl-PL', {weekday: 'long'}).slice(1);
 
             return (
-                <div className="min-h-screen flex">
-                    <aside className="w-80 p-6 flex flex-col shrink-0">
+                /* ZMIANA UKŁADU: H-SCREEN i OVERFLOW-HIDDEN NA CAŁY KONTENER */
+                <div className="h-screen w-full flex overflow-hidden bg-[#f8faf9]">
+                    
+                    {/* PANEL BOCZNY: FIXED HEIGHT, NIE PRZEWIJA SIĘ, ALE WYGLĄDA JAK LEWITUJĄCY (DZIĘKI padding-6) */}
+                    <aside className="w-80 h-full p-6 flex flex-col shrink-0">
                         <div className="panel-style h-full flex flex-col overflow-hidden">
                             <div className="p-10 border-b text-center bg-gray-50/20">
                                 <img src="./assets/DiLO.png" className="h-28 mx-auto mb-6 scale-110" />
@@ -267,28 +344,35 @@
                         </div>
                     </aside>
 
-                    <main className="flex-1 p-12 overflow-auto relative min-w-0">
-                        <header className="flex justify-between items-start mb-12">
-                            <h1 className="text-7xl font-section-title text-gray-800 leading-none mt-2 shrink-0">
+                    {/* GŁÓWNA TREŚĆ: TYLKO TA CZĘŚĆ SIĘ PRZEWIJA (overflow-y-auto) */}
+                    <main className="flex-1 h-full overflow-y-auto p-12 relative min-w-0 custom-scrollbar">
+                        
+                        {/* NAGŁÓWEK - KOLORY I UKŁAD DOPASOWANE */}
+                        <header className="flex justify-between items-center mb-8 sticky top-0 z-10 bg-[#f8faf9]/90 backdrop-blur-sm py-2">
+                            <h1 className="text-5xl font-section-title text-[#006B61] leading-none shrink-0">
                                 {page === 'home' ? 'Strona główna' : page === 'patients' ? 'Baza pacjentów' : page === 'funds' ? 'Programy i fundacje' : page === 'schedules' ? 'Harmonogramy' : 'Dokumentacja'}
                             </h1>
-                            <div className="text-right panel-style p-8 min-w-[320px] flex flex-col justify-center">
-                                <p className="text-xl font-black text-[#006B61] uppercase tracking-[0.2em] leading-none mb-3">
+                            <div className="text-right panel-style px-8 py-4 min-w-[320px] flex flex-col justify-center border-b-[8px]">
+                                <p className="text-3xl font-black text-[#006B61] uppercase tracking-[0.05em] leading-none mb-1">
                                     {formattedDayName}, {now.toLocaleDateString('pl-PL')}
                                 </p>
-                                <p className="text-5xl font-black text-gray-400 tabular-nums tracking-tighter border-t pt-3 border-gray-100">
+                                <p className="text-5xl font-black text-[#006B61] tabular-nums tracking-tighter">
                                     {now.toLocaleTimeString('pl-PL')}
                                 </p>
                             </div>
                         </header>
 
-                        <div className="animate-fadeIn">
+                        <div className="animate-fadeIn pb-12">
                             {page === 'home' && <HomePage 
                                 tasks={tasks} 
                                 onAddTask={(t,d,p,c)=>setTasks([...tasks,{id:Date.now(),text:t,date:d,patient:p,coord:c}])} 
                                 onDeleteTask={id=>setTasks(tasks.filter(tk=>tk.id!==id))} 
                             />}
+                            
                             {page === 'funds' && <FundsPage funds={funds} loading={loadingFunds} setShowModal={setShowFundModal} refreshData={fetchFunds} />}
+                            
+                            {page === 'schedules' && <SchedulesPage />}
+                            
                             {page === 'patients' && (
                                 <div className="bg-white p-12 rounded-[50px] shadow-sm border border-gray-100 min-h-[500px]">
                                     <div className="flex justify-between items-center mb-10"><h2 className="text-3xl font-black text-[#006B61] uppercase tracking-widest">Lista pacjentów</h2><button className="bg-[#006B61] text-white px-8 py-4 rounded-[25px] font-black text-[10px] uppercase shadow-xl hover:scale-105 transition-all">Dodaj pacjenta</button></div>
@@ -296,7 +380,7 @@
                                     <p className="text-center text-gray-200 italic py-24 font-black tracking-widest opacity-20 text-6xl uppercase leading-none italic font-bold">Baza gotowa do połączenia</p>
                                 </div>
                             )}
-                            {['schedules', 'docs'].includes(page) && (
+                            {['docs'].includes(page) && (
                                 <div className="bg-white p-12 rounded-[50px] shadow-sm border border-gray-100 text-center py-32 italic">
                                     <p className="text-gray-200 font-black uppercase tracking-[0.5em] text-2xl">Moduł w synchronizacji</p>
                                 </div>
@@ -314,7 +398,7 @@
                                     <div className="p-10 overflow-y-auto custom-scrollbar grid grid-cols-1 md:grid-cols-2 gap-8 text-sm font-bold">
                                         <div className="space-y-4">
                                             <input type="text" placeholder="NAZWA" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61]" />
-                                            <input type="text" placeholder="TYP" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61]" />
+                                            <input type="text" placeholder="TYP (Fundacja / Program)" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61]" />
                                             <input type="text" placeholder="NOWOTWÓR" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61]" />
                                         </div>
                                         <div className="space-y-4">

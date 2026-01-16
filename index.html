@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Koordynacji STO</title>
+    <title> System Koordynacji </title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -244,4 +244,85 @@
                             </h1>
                             <div className="text-right bg-white p-8 rounded-[40px] shadow-sm border border-b-8 border-[#006B61] min-w-[280px]">
                                 <p className="text-xl font-black text-[#006B61] uppercase tracking-[0.1em] leading-tight mb-2">
-                                    {now.toLocaleDateString('pl-PL', {weekday: 'long'}).charAt(0).
+                                    {now.toLocaleDateString('pl-PL', {weekday: 'long'}).charAt(0).toUpperCase() + now.toLocaleDateString('pl-PL', {weekday: 'long'}).slice(1)}
+                                </p>
+                                <p className="text-2xl font-black text-gray-400 uppercase tracking-tighter tabular-nums mb-1">
+                                    {now.toLocaleDateString('pl-PL', {day:'2-digit', month:'2-digit', year:'numeric'})}
+                                </p>
+                                <p className="text-4xl font-black text-[#006B61] tabular-nums tracking-tighter">
+                                    {now.toLocaleTimeString('pl-PL')}
+                                </p>
+                            </div>
+                        </header>
+
+                        <div className="animate-fadeIn">
+                            {page === 'home' && <HomePage user={user} tasks={tasks} onAddTask={(t,d,p,c)=>setTasks([...tasks,{id:Date.now(),text:t,date:d,patient:p,coord:c}])} onDeleteTask={id=>setTasks(tasks.filter(tk=>tk.id!==id))} />}
+                            {page === 'funds' && <FundsPage funds={funds} loading={loadingFunds} setShowModal={setShowFundModal} />}
+                            {page === 'patients' && (
+                                <div className="bg-white p-12 rounded-[50px] shadow-sm border border-gray-100 min-h-[500px]">
+                                    <div className="flex justify-between items-center mb-10"><h2 className="text-3xl font-black text-[#006B61] uppercase tracking-tighter">Lista pacjentów</h2><button className="bg-[#006B61] text-white px-8 py-4 rounded-[25px] font-black text-[10px] uppercase shadow-xl hover:scale-105 transition-all">Dodaj nowego pacjenta</button></div>
+                                    <div className="relative mb-10"><i data-lucide="search" className="absolute left-6 top-5 w-5 h-5 text-gray-300"></i><input type="text" placeholder="Szukaj pacjenta..." className="w-full bg-gray-50 p-5 pl-14 rounded-[25px] outline-none font-bold text-gray-600 shadow-inner" /></div>
+                                    <p className="text-center text-gray-200 italic py-24 font-black tracking-widest opacity-20 text-6xl uppercase leading-none">Baza gotowa do<br/>podpięcia danych</p>
+                                </div>
+                            )}
+                            {page === 'schedules' && (
+                                <div className="bg-white p-12 rounded-[50px] shadow-sm border border-gray-100 text-center py-32">
+                                    <h2 className="text-4xl font-title italic text-gray-300 uppercase tracking-[0.2em] mb-4">Grafiki i Terminy</h2>
+                                    <p className="text-gray-200 font-black uppercase tracking-[0.5em] text-2xl">Moduł w synchronizacji</p>
+                                </div>
+                            )}
+                            {page === 'docs' && (
+                                <div className="bg-white p-12 rounded-[50px] shadow-sm border text-center py-20">
+                                    <h2 className="text-4xl font-title italic text-[#006B61] mb-10 underline decoration-[#C9D9B6]">Generator Dokumentacji</h2>
+                                    <div className="max-w-md mx-auto space-y-4">
+                                        <select className="w-full p-4 bg-gray-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-[#006B61]"><option>Wniosek o Konsylium DiLO</option><option>Raport Miesięczny Koordynatora</option></select>
+                                        <button className="w-full bg-[#006B61] text-white p-6 rounded-[25px] font-black uppercase text-xs shadow-xl transition-all hover:bg-[#408670]">Generuj dokument</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* MODAL PROGRAMY/FUNDACJE */}
+                        {showFundModal && (
+                            <div className="fixed inset-0 bg-[#006B61]/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                                <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[50px] shadow-2xl overflow-hidden flex flex-col animate-fadeIn">
+                                    <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                                        <h3 className="text-3xl font-title italic text-[#006B61]">Nowy wpis do bazy danych</h3>
+                                        <button onClick={() => setShowFundModal(false)} className="text-gray-400 hover:text-red-500 transition-colors"><i data-lucide="x-circle" className="w-8 h-8"></i></button>
+                                    </div>
+                                    <div className="p-10 overflow-y-auto custom-scrollbar grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="space-y-4 text-sm">
+                                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Dane podstawowe</h4>
+                                            <input type="text" placeholder="NAZWA PROGRAMU/FUNDACJI" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold" />
+                                            <input type="text" placeholder="TYP" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold" />
+                                            <input type="text" placeholder="TYP NOWOTWORU" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold" />
+                                            <input type="text" placeholder="WIEK PACJENTA" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold" />
+                                        </div>
+                                        <div className="space-y-4 text-sm">
+                                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Szczegóły wsparcia</h4>
+                                            <textarea placeholder="RODZAJ WSPARCIA" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold h-20"></textarea>
+                                            <textarea placeholder="WSPARCIE SZCZEGÓŁY" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold h-20"></textarea>
+                                        </div>
+                                        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                            <input type="text" placeholder="TELEFON" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold" />
+                                            <input type="email" placeholder="EMAIL" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold" />
+                                            <input type="text" placeholder="STRONA WWW" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold" />
+                                        </div>
+                                    </div>
+                                    <div className="p-8 border-t border-gray-100 bg-gray-50/50 flex gap-4">
+                                        <button onClick={() => setShowFundModal(false)} className="flex-1 py-4 rounded-2xl font-black uppercase text-[10px] text-gray-400 border-2 border-gray-200">Porzuć zmiany</button>
+                                        <button className="flex-[2] bg-[#006B61] text-white py-4 rounded-2xl font-black uppercase text-[10px] shadow-xl hover:bg-[#408670]">Zapisz w arkuszu Google</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

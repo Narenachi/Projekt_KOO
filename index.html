@@ -10,9 +10,15 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+        /* 1. TUTAJ IMPORTUJESZ CZCIONKI Z GOOGLE FONTS */
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,900;1,900&family=Inter:wght@400;700;900&display=swap');
+
+        /* 2. CZCIONKA DLA CAŁEJ APKI (TEKSTY, DANE) */
         body { font-family: 'Inter', sans-serif; background-color: #f8faf9; }
+
+        /* 3. CZCIONKA DLA DUŻYCH TYTUŁÓW ZAKŁADEK */
         .font-title { font-family: 'Playfair Display', serif; }
+
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -23,12 +29,12 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        const coordinators = ['WSZYSCY', 'Oliwia Giermanowska', 'Klaudia Iwaneczko', 'Emilia Jabłońska', 'Natalia Kopera', 'Anna Metlerska', 'Patrycja Szaton'];
+        const coordinators = ['Oliwia Giermanowska', 'Klaudia Iwaneczko', 'Emilia Jabłońska', 'Natalia Kopera', 'Anna Metlerska', 'Patrycja Szaton'];
         
-        // TWOJA KONFIGURACJA Z WYGENEROWANYM LINKIEM
+        // TWOJA KONFIGURACJA
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwc9p_yD-oH3pD7rjDuQZYh7pChebVnbtp79fjYyl1KcwbHMn8JEG7RRnSZoDMF7OleXA/exec";
 
-        // --- KOMPONENT: FUNDACJE ---
+        // --- KOMPONENT: PROGRAMY I FUNDACJE ---
         const FundsPage = () => {
             const [funds, setFunds] = useState([]);
             const [search, setSearch] = useState('');
@@ -37,27 +43,23 @@
             useEffect(() => {
                 fetch(SCRIPT_URL)
                     .then(res => res.json())
-                    .then(data => {
-                        setFunds(data);
-                        setLoading(false);
-                    })
-                    .catch(err => {
-                        console.error("Błąd pobierania:", err);
-                        setLoading(false);
-                    });
+                    .then(data => { setFunds(data); setLoading(false); })
+                    .catch(err => { console.error(err); setLoading(false); });
             }, []);
 
             useEffect(() => { lucide.createIcons(); }, [funds, loading]);
 
+            // ROZBUDOWANA WYSZUKIWARKA (Szuka w wielu polach jednocześnie)
             const filtered = funds.filter(f => 
-                (f.name && f.name.toLowerCase().includes(search.toLowerCase())) || 
-                (f.cancerType && f.cancerType.toLowerCase().includes(search.toLowerCase()))
+                [f.name, f.support, f.cancerType, f.stage, f.scope].some(field => 
+                    field?.toLowerCase().includes(search.toLowerCase())
+                )
             );
 
             if (loading) return (
                 <div className="flex flex-col items-center justify-center h-64 animate-pulse">
                     <div className="w-12 h-12 border-4 border-[#006B61] border-t-transparent rounded-full animate-spin mb-4"></div>
-                    <p className="text-[#006B61] font-black uppercase tracking-widest text-[10px]">Pobieranie danych z bazy Google...</p>
+                    <p className="text-[#006B61] font-black uppercase text-[10px]">Pobieranie danych z arkusza...</p>
                 </div>
             );
 
@@ -69,7 +71,7 @@
                             <i data-lucide="search" className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 w-5 h-5"></i>
                             <input 
                                 type="text" 
-                                placeholder="Szukaj w bazie (np. nazwa, typ nowotworu)..." 
+                                placeholder="Szukaj (nazwa, wsparcie, nowotwór, etap leczenia, zasięg)..." 
                                 className="w-full bg-gray-50 p-5 pl-14 rounded-[25px] outline-none focus:ring-2 focus:ring-[#006B61] font-bold text-gray-600 border-none shadow-inner"
                                 onChange={(e) => setSearch(e.target.value)}
                             />
@@ -77,24 +79,23 @@
                     </div>
 
                     <div className="space-y-4">
-                        {filtered.length === 0 ? (
-                            <p className="text-center py-20 text-gray-300 font-black uppercase tracking-widest italic">Nie znaleziono pasujących fundacji</p>
-                        ) : filtered.map((fund, idx) => (
-                            <div key={idx} className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden p-8 grid grid-cols-1 md:grid-cols-3 gap-8 hover:shadow-md transition-all">
+                        {filtered.map((fund, idx) => (
+                            <div key={idx} className="bg-white rounded-[40px] border border-gray-100 p-8 grid grid-cols-1 md:grid-cols-3 gap-8 hover:shadow-md transition-all">
                                 <div className="md:col-span-2">
                                     <span className="text-[9px] font-black bg-[#C9D9B6] text-[#006B61] px-3 py-1 rounded-full uppercase mb-2 inline-block font-bold">{fund.type}</span>
-                                    <h3 className="text-2xl font-black text-gray-800 mb-4 tracking-tight">{fund.name}</h3>
-                                    <div className="space-y-4 text-sm leading-relaxed text-gray-600">
-                                        <p><strong className="text-[#006B61] uppercase text-[9px] tracking-widest block mb-1">Zakres wsparcia:</strong> {fund.support}</p>
-                                        <p><strong className="text-[#006B61] uppercase text-[9px] tracking-widest block mb-1">Dla kogo:</strong> {fund.age} | <span className="text-[#408670] font-bold">{fund.cancerType}</span></p>
-                                        <p className="text-gray-400 italic text-xs">Aktualizacja: {fund.updated}</p>
+                                    <h3 className="text-2xl font-black text-gray-800 mb-4">{fund.name}</h3>
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <p><strong className="text-[#006B61] uppercase text-[9px] block">Wsparcie:</strong> {fund.support}</p>
+                                        <p><strong className="text-[#006B61] uppercase text-[9px] block">Etap leczenia:</strong> {fund.stage}</p>
+                                        <p><strong className="text-[#006B61] uppercase text-[9px] block">Nowotwór:</strong> {fund.cancerType}</p>
+                                        <p><strong className="text-[#006B61] uppercase text-[9px] block">Zasięg:</strong> {fund.scope}</p>
                                     </div>
                                 </div>
-                                <div className="bg-gray-50 p-6 rounded-[35px] space-y-3 flex flex-col justify-center">
-                                    <p className="font-black text-[#006B61] uppercase text-[10px] tracking-widest border-b border-[#C9D9B6] pb-2 mb-2 italic">Dane kontaktowe:</p>
+                                <div className="bg-gray-50 p-6 rounded-[35px] space-y-3 flex flex-col justify-center border border-gray-100">
+                                    <p className="font-black text-[#006B61] uppercase text-[10px] italic border-b pb-2 mb-2">Kontakt:</p>
                                     <p className="flex items-center gap-3 font-bold text-xs"><i data-lucide="phone" className="w-4 h-4 text-[#408670]"></i> {fund.phone}</p>
                                     <p className="flex items-center gap-3 font-bold text-xs truncate"><i data-lucide="mail" className="w-4 h-4 text-[#408670]"></i> {fund.email}</p>
-                                    <a href={fund.web} target="_blank" className="block text-center bg-[#006B61] text-white p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest mt-4 hover:bg-[#408670] transition-all shadow-lg">Otwórz stronę WWW</a>
+                                    <a href={fund.web} target="_blank" className="block text-center bg-[#006B61] text-white p-4 rounded-2xl font-black text-[10px] uppercase mt-2">Strona WWW</a>
                                 </div>
                             </div>
                         ))}
@@ -103,34 +104,7 @@
             );
         };
 
-        // --- KOMPONENTY STRONY GŁÓWNEJ I HARMONOGRAMU ---
-        const SchedulesPage = () => {
-            const [type, setType] = useState(null);
-            useEffect(() => { lucide.createIcons(); }, [type]);
-            return (
-                <div className="animate-fadeIn bg-white p-12 rounded-[50px] shadow-sm border border-gray-100 text-center">
-                    <h2 className="text-5xl font-title italic text-[#006B61] tracking-tighter mb-10 underline decoration-[#C9D9B6]">Harmonogramy</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[{id:'coord', l:'Koordynatorzy', i:'users'}, {id:'patient', l:'Pacjenci', i:'user'}, {id:'staff', l:'Personel medyczny', i:'briefcase'}].map(b => (
-                            <button key={b.id} onClick={() => setType(b.id)} className={`p-8 rounded-[35px] border-2 flex flex-col items-center gap-4 transition-all ${type === b.id ? 'bg-[#006B61] text-white shadow-xl scale-105' : 'bg-gray-50 text-gray-500 hover:border-[#9DBD9A]'}`}>
-                                <i data-lucide={b.i} className="w-8 h-8"></i>
-                                <span className="font-black text-[10px] uppercase tracking-widest">{b.l}</span>
-                            </button>
-                        ))}
-                    </div>
-                    {type && (
-                        <div className="mt-12 max-w-md mx-auto animate-fadeIn p-8 bg-gray-50 rounded-[35px] border border-gray-100">
-                            <select className="w-full p-4 border-2 rounded-2xl font-bold text-[#006B61] outline-none focus:border-[#006B61] bg-white">
-                                <option>Wybierz z listy...</option>
-                                {type === 'coord' && coordinators.map(c => <option key={c}>{c}</option>)}
-                            </select>
-                            <button className="w-full mt-4 bg-[#006B61] text-white p-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg">Pokaż dane</button>
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
+        // --- KOMPONENT: STRONA GŁÓWNA ---
         const HomePage = ({ tasks, onAddTask, onDeleteTask, user }) => {
             const [tText, setTText] = useState('');
             const [tDate, setTDate] = useState('');
@@ -139,22 +113,22 @@
             const days = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'];
             useEffect(() => { lucide.createIcons(); });
             return (
-                <div className="space-y-10 animate-fadeIn text-sm">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-10 animate-fadeIn">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-bold text-gray-400">
                         <section className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
-                            <h2 className="font-black text-[#006B61] mb-6 uppercase text-[10px] tracking-widest flex items-center gap-2"><i data-lucide="phone" className="w-4 h-4"></i> Połączenia (7 dni)</h2>
-                            {days.map(d => <div key={d} className="p-3 bg-gray-50 rounded-xl text-[10px] font-bold text-gray-300 flex justify-between mb-1">{d} <span>-</span></div>)}
+                            <h2 className="font-black text-[#006B61] mb-6 uppercase text-[10px] tracking-widest flex items-center gap-2"><i data-lucide="phone" className="w-4 h-4"></i> Połączenia (najbliższe 7 dni)</h2>
+                            {days.map(d => <div key={d} className="p-3 bg-gray-50 rounded-xl text-[10px] flex justify-between mb-1">{d} <span>-</span></div>)}
                         </section>
                         <section className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
-                            <h2 className="font-black text-[#006B61] mb-6 uppercase text-[10px] tracking-widest flex items-center gap-2"><i data-lucide="calendar" className="w-4 h-4"></i> Wizyty (7 dni)</h2>
-                            {days.map(d => <div key={d} className="p-3 bg-gray-50 rounded-xl text-[10px] font-bold text-gray-200 flex justify-between mb-1">{d} <span>-</span></div>)}
+                            <h2 className="font-black text-[#006B61] mb-6 uppercase text-[10px] tracking-widest flex items-center gap-2"><i data-lucide="calendar" className="w-4 h-4"></i> Wizyty (najbliższe 7 dni)</h2>
+                            {days.map(d => <div key={d} className="p-3 bg-gray-50 rounded-xl text-[10px] flex justify-between mb-1">{d} <span>-</span></div>)}
                         </section>
                     </div>
                     <section className="bg-[#006B61] p-10 rounded-[50px] text-white shadow-2xl">
                         <h2 className="flex items-center gap-2 font-black mb-8 uppercase text-[10px] tracking-widest text-[#C9D9B6]"><i data-lucide="clipboard-list" className="w-5 h-5"></i> Zadania do wykonania</h2>
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-8 bg-white/10 p-6 rounded-3xl border border-white/10">
                             <input type="text" placeholder="Treść..." value={tText} onChange={e=>setTText(e.target.value)} className="md:col-span-2 bg-transparent border-b border-[#9DBD9A] p-2 outline-none" />
-                            <select value={tCoord} onChange={e=>setTCoord(e.target.value)} className="bg-teal-800 p-2 rounded-lg outline-none text-[10px]">{coordinators.map(c => <option key={c}>{c}</option>)}</select>
+                            <select value={tCoord} onChange={e=>setTCoord(e.target.value)} className="bg-teal-800 p-2 rounded-lg outline-none text-[10px]"><option>WSZYSCY</option>{coordinators.map(c => <option key={c}>{c}</option>)}</select>
                             <select value={tPatient} onChange={e=>setTPatient(e.target.value)} className="bg-teal-800 p-2 rounded-lg outline-none text-[10px]"><option>Nie dotyczy pacjenta</option><option>KAŻDY</option></select>
                             <div className="flex gap-2">
                                 <input type="date" value={tDate} onChange={e=>setTDate(e.target.value)} className="bg-transparent border-b border-[#9DBD9A] flex-1 outline-none text-[10px]" />
@@ -163,7 +137,7 @@
                         </div>
                         <div className="space-y-3">
                             {tasks.map(t => (
-                                <div key={t.id} className="bg-white/5 border border-white/10 p-5 rounded-3xl flex justify-between items-center group">
+                                <div key={t.id} className="bg-white/5 border border-white/10 p-5 rounded-3xl flex justify-between items-center group transition-all">
                                     <div><p className="text-[10px] font-black text-teal-200 uppercase mb-1">{t.date} | {t.coord}</p><p className="font-bold text-lg">{t.text}</p><p className="text-[10px] text-teal-400 font-bold uppercase mt-1">Pacjent: {t.patient}</p></div>
                                     <button onClick={()=>onDeleteTask(t.id)} className="bg-[#408670] px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-white hover:text-[#006B61] transition-all">Wykonano</button>
                                 </div>
@@ -187,15 +161,26 @@
             useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
             useEffect(() => { lucide.createIcons(); }, [isLoggedIn, page, tasks]);
 
+            const handleLogin = (e) => {
+                if(e) e.preventDefault(); // Zapobiega odświeżaniu przy kliknięciu/Enterze
+                const l = document.getElementById('ls').value;
+                const p = document.getElementById('ps').value;
+                if(l && p === 'PaniAlcer<3') { setUser(coordsMap[l]); setIsLoggedIn(true); } 
+                else { alert('Nieprawidłowy login lub hasło!'); }
+            };
+
             if (!isLoggedIn) {
                 return (
-                    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 font-sans">
-                        <div className="bg-white p-12 rounded-[50px] shadow-2xl w-full max-w-sm text-center border-b-[12px] border-[#006B61]">
+                    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+                        <form onSubmit={handleLogin} className="bg-white p-12 rounded-[50px] shadow-2xl w-full max-w-sm text-center border-b-[12px] border-[#006B61]">
                             <img src="./assets/DiLO.png" className="h-16 mx-auto mb-10" />
-                            <select id="ls" className="w-full p-4 border-2 border-gray-100 rounded-2xl mb-4 font-bold outline-none bg-gray-50 focus:border-[#006B61]">{Object.keys(coordsMap).map(l => <option key={l} value={l}>{l}</option>)}</select>
+                            <select id="ls" className="w-full p-4 border-2 border-gray-100 rounded-2xl mb-4 font-bold outline-none bg-gray-50 focus:border-[#006B61]">
+                                <option value="">Wybierz login (ID)</option>
+                                {Object.keys(coordsMap).map(l => <option key={l} value={l}>{l}</option>)}
+                            </select>
                             <input id="ps" type="password" placeholder="Hasło" className="w-full p-4 border-2 border-gray-100 rounded-2xl mb-8 font-bold outline-none bg-gray-50 focus:border-[#006B61]" />
-                            <button onClick={() => { if(document.getElementById('ps').value === 'PaniAlcer<3') { setUser(coordsMap[document.getElementById('ls').value]); setIsLoggedIn(true); } else { alert('Nieprawidłowe hasło!'); } }} className="w-full bg-[#006B61] text-white p-5 rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">Zaloguj się</button>
-                        </div>
+                            <button type="submit" className="w-full bg-[#006B61] text-white p-5 rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">Zaloguj się</button>
+                        </form>
                     </div>
                 );
             }
@@ -205,15 +190,15 @@
                     <aside className="w-80 bg-white shadow-xl flex flex-col border-r border-gray-50">
                         <div className="p-10 border-b text-center"><img src="./assets/DiLO.png" className="h-10 mx-auto mb-4" /><p className="font-black text-[#006B61] leading-tight text-sm italic">{user}</p></div>
                         <nav className="flex-1 p-8 space-y-4 font-black text-[10px] uppercase tracking-widest">
-                            {[ {id:'home',l:'Strona główna',i:'trending-up'}, {id:'patients',l:'Baza pacjentów',i:'users'}, {id:'schedules',l:'Harmonogramy',i:'calendar'}, {id:'docs',l:'Dokumenty',i:'file-text'}, {id:'funds',l:'Fundacje',i:'heart'} ].map(i => (
-                                <div key={i.id} onClick={() => setPage(i.id)} className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all ${page === i.id ? 'bg-[#006B61] text-white shadow-lg shadow-teal-900/10' : 'text-gray-400 hover:bg-teal-50 hover:text-[#006B61]'}`}><i data-lucide={i.i} className="w-4 h-4"></i> {i.l}</div>
+                            {[ {id:'home',l:'Strona główna',i:'trending-up'}, {id:'patients',l:'Baza pacjentów',i:'users'}, {id:'schedules',l:'Harmonogramy',i:'calendar'}, {id:'docs',l:'Dokumenty',i:'file-text'}, {id:'funds',l:'Programy i fundacje',i:'heart'} ].map(i => (
+                                <div key={i.id} onClick={() => setPage(i.id)} className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all ${page === i.id ? 'bg-[#006B61] text-white shadow-lg' : 'text-gray-400 hover:bg-teal-50 hover:text-[#006B61]'}`}><i data-lucide={i.i} className="w-4 h-4"></i> {i.l}</div>
                             ))}
                         </nav>
-                        <button onClick={()=>setIsLoggedIn(false)} className="m-8 p-4 text-red-400 font-black text-[9px] uppercase border-2 border-red-50 rounded-2xl hover:bg-red-50 transition-all font-bold">Wyloguj się</button>
+                        <button onClick={()=>setIsLoggedIn(false)} className="m-8 p-4 text-red-400 font-black text-[9px] uppercase border-2 border-red-50 rounded-2xl hover:bg-red-50 font-bold transition-all">Wyloguj się</button>
                     </aside>
                     <main className="flex-1 p-12 overflow-auto">
                         <header className="flex justify-between items-center mb-12">
-                            <h1 className="text-6xl font-title italic text-gray-800 tracking-tighter uppercase">{page === 'home' ? 'Strona główna' : page === 'patients' ? 'Baza pacjentów' : page === 'funds' ? 'Fundacje' : page === 'schedules' ? 'Harmonogramy' : 'Dokumentacja'}</h1>
+                            <h1 className="text-6xl font-title italic text-gray-800 tracking-tighter uppercase">{page === 'home' ? 'Strona główna' : page === 'patients' ? 'Baza pacjentów' : page === 'funds' ? 'Programy i fundacje' : page === 'schedules' ? 'Harmonogramy' : 'Dokumentacja'}</h1>
                             <div className="text-right bg-white py-4 px-8 rounded-3xl shadow-sm border border-b-4 border-[#006B61]">
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 italic">{now.toLocaleDateString('pl-PL', {weekday: 'long'})}</p>
                                 <p className="text-sm font-black text-[#006B61] uppercase tabular-nums tracking-tighter">{now.toLocaleDateString('pl-PL')}, {now.toLocaleTimeString('pl-PL')}</p>
@@ -221,18 +206,21 @@
                         </header>
                         {page === 'home' && <HomePage user={user} tasks={tasks} onAddTask={(t,d,p,c)=>setTasks([...tasks,{id:Date.now(),text:t,date:d,patient:p,coord:c}])} onDeleteTask={id=>setTasks(tasks.filter(tk=>tk.id!==id))} />}
                         {page === 'funds' && <FundsPage />}
-                        {page === 'schedules' && <SchedulesPage />}
+                        {page === 'schedules' && (
+                            <div className="bg-white p-12 rounded-[50px] shadow-sm border border-gray-100 text-center animate-fadeIn">
+                                <h2 className="text-5xl font-title italic text-[#006B61] tracking-tighter underline decoration-[#C9D9B6] mb-10">Harmonogramy</h2>
+                                <p className="text-gray-300 font-black uppercase tracking-[0.4em] italic opacity-20 text-4xl">System gotowy do importu grafików</p>
+                            </div>
+                        )}
                         {page === 'patients' && (
                             <div className="bg-white p-12 rounded-[50px] shadow-sm border border-gray-100 animate-fadeIn min-h-[500px]">
-                                <div className="flex justify-between items-center mb-10">
-                                    <h2 className="text-4xl font-title italic text-[#006B61] tracking-tighter">Baza pacjentów</h2>
-                                    <button className="bg-[#006B61] text-white px-8 py-4 rounded-[25px] font-black text-[10px] uppercase tracking-widest shadow-xl">Dodaj nowego pacjenta</button>
-                                </div>
-                                <p className="text-center text-gray-200 italic py-24 font-black tracking-widest opacity-20 text-6xl uppercase leading-none">Gotowe do<br/>importu danych</p>
+                                <div className="flex justify-between items-center mb-10"><h2 className="text-4xl font-title italic text-[#006B61] tracking-tighter">Baza pacjentów</h2><button className="bg-[#006B61] text-white px-8 py-4 rounded-[25px] font-black text-[10px] uppercase shadow-xl">Dodaj nowego pacjenta</button></div>
+                                <div className="relative mb-10"><i data-lucide="search" className="absolute left-6 top-5 w-5 h-5 text-gray-300"></i><input type="text" placeholder="Szukaj..." className="w-full bg-gray-50 p-5 pl-14 rounded-[25px] outline-none font-bold text-gray-600 shadow-inner" /></div>
+                                <p className="text-center text-gray-200 italic py-24 font-black tracking-widest opacity-20 text-5xl uppercase leading-none">Czekam na połączenie<br/>z bazą pacjentów</p>
                             </div>
                         )}
                         {page === 'docs' && (
-                            <div className="bg-white p-12 rounded-[50px] shadow-sm border text-center animate-fadeIn"><h2 className="text-4xl font-title italic text-[#006B61] mb-10 underline decoration-[#C9D9B6]">Dokumentacja</h2><div className="max-w-md mx-auto space-y-4"><select className="w-full p-4 bg-gray-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-[#006B61]"><option>Wniosek o Konsylium DiLO</option><option>Raport Miesięczny</option></select><button className="w-full bg-[#006B61] text-white p-6 rounded-[25px] font-black uppercase text-xs shadow-xl shadow-teal-900/20">Generuj dokument</button></div></div>
+                            <div className="bg-white p-12 rounded-[50px] shadow-sm border text-center animate-fadeIn"><h2 className="text-4xl font-title italic text-[#006B61] mb-10 underline decoration-[#C9D9B6]">Dokumentacja</h2><p className="text-gray-300 font-black uppercase tracking-widest text-xs italic">Moduł generowania raportów będzie dostępny po podpięciu arkusza danych</p></div>
                         )}
                     </main>
                 </div>

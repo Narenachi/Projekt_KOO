@@ -17,17 +17,24 @@
         const { useState, useEffect } = React;
         const { Calendar, Phone, ClipboardList, Users, FileText, TrendingUp, CheckCircle, XCircle, Clock, Plus, Loader2 } = lucide;
 
+        // KONFIGURACJA GOOGLE SHEETS (TUTAJ WPISZ SWOJE DANE, ŻEBY PRZETESTOWAĆ PRAWDZIWE POŁĄCZENIE)
+        const CONFIG = {
+            API_KEY: 'TUTAJ_WPISZ_TWÓJ_KLUCZ_API', 
+            SHEET_ID: 'TUTAJ_WPISZ_ID_ARKUSZA',
+            RANGE: 'Arkusz1!A2:E20' 
+        };
+
         const App = () => {
             const [isLoggedIn, setIsLoggedIn] = useState(false);
             const [isSyncing, setIsSyncing] = useState(false);
             const [syncProgress, setSyncProgress] = useState(0);
             const [isDataLoaded, setIsDataLoaded] = useState(false);
+            const [patients, setPatients] = useState([]); // Tu wylądują dane z Dysku
             const [currentUser, setCurrentUser] = useState({ login: '', fullName: '' });
             const [password, setPassword] = useState('');
             const [selectedLogin, setSelectedLogin] = useState('');
             const [currentTime, setCurrentTime] = useState(new Date());
 
-            // Baza koordynatorów
             const coordinatorsMap = {
                 'GiermanowskaO': 'Oliwia Giermanowska',
                 'IwaneczkoK': 'Klaudia Iwaneczko',
@@ -42,48 +49,69 @@
                 return () => clearInterval(timer);
             }, []);
 
-            useEffect(() => {
-                lucide.createIcons();
-            });
+            useEffect(() => { lucide.createIcons(); });
 
-            const handleLogin = () => {
+            // FUNKCJA POBIERAJĄCA DANE Z GOOGLE SHEETS
+            const fetchDataFromGoogleSheets = async () => {
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${CONFIG.RANGE}?key=${CONFIG.API_KEY}`;
+                
+                try {
+                    const response = await fetch(url);
+                    const result = await response.json();
+                    
+                    if (result.values) {
+                        // Jeśli połączenie zadziała, mapujemy dane z tabeli na obiekty
+                        const mappedData = result.values.map((row, index) => ({
+                            id: index,
+                            patient: row[0], // Kolumna A
+                            phone: row[1],   // Kolumna B
+                            status: row[2]   // Kolumna C
+                        }));
+                        setPatients(mappedData);
+                        return true;
+                    }
+                } catch (error) {
+                    console.error("Błąd połączenia z Google Drive:", error);
+                }
+                return false; // Zwraca false, jeśli nie ma kluczy lub jest błąd
+            };
+
+            const handleLogin = async () => {
                 if (password === 'PaniAlcer<3' && selectedLogin) {
                     setIsSyncing(true);
                     let progress = 0;
-                    const interval = setInterval(() => {
-                        progress += 5;
+                    
+                    const interval = setInterval(async () => {
+                        progress += 10;
                         setSyncProgress(progress);
+                        
                         if (progress >= 100) {
                             clearInterval(interval);
-                            setCurrentUser({
-                                login: selectedLogin,
-                                fullName: coordinatorsMap[selectedLogin]
-                            });
+                            
+                            // TEST POŁĄCZENIA
+                            const success = await fetchDataFromGoogleSheets();
+                            
+                            setCurrentUser({ login: selectedLogin, fullName: coordinatorsMap[selectedLogin] });
                             setIsLoggedIn(true);
                             setIsSyncing(false);
-                            setIsDataLoaded(true);
+                            if (success) setIsDataLoaded(true);
                         }
-                    }, 100);
+                    }, 150);
                 } else {
                     alert('Nieprawidłowe dane logowania!');
                 }
             };
 
-            const handleKeyPress = (e) => {
-                if (e.key === 'Enter') handleLogin();
-            };
+            const handleKeyPress = (e) => { if (e.key === 'Enter') handleLogin(); };
 
             if (isSyncing) {
                 return (
-                    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 text-center">
-                        <img src="./assets/DiLO.png" className="h-20 mb-8 animate-bounce" 
-                             onError={(e) => e.target.src="https://images.seeklogo.com/logo-png/26/2/szybka-terapia-onkologiczna-logo-png_seeklogo-268047.png"}/>
-                        <h2 className="text-xl font-semibold text-gray-700 mb-2">Inicjowanie sesji...</h2>
-                        <p className="text-sm text-gray-400 mb-6 font-medium">Użytkownik: {coordinatorsMap[selectedLogin]}</p>
-                        <div className="w-64 bg-gray-100 rounded-full h-3 mb-2 overflow-hidden border">
+                    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+                        <img src="./assets/DiLO.png" className="h-20 mb-8 animate-bounce" onError={(e) => e.target.src="https://images.seeklogo.com/logo-png/26/2/szybka-terapia-onkologiczna-logo-png_seeklogo-268047.png"}/>
+                        <h2 className="text-xl font-bold text-gray-700">Testowanie połączenia...</h2>
+                        <div className="w-64 bg-gray-100 rounded-full h-3 mt-4 overflow-hidden border">
                             <div className="bg-teal-600 h-full transition-all duration-200" style={{width: `${syncProgress}%`}}></div>
                         </div>
-                        <p className="text-xs font-mono text-teal-600">Pobieranie danych z Google Drive: {syncProgress}%</p>
                     </div>
                 );
             }
@@ -92,32 +120,15 @@
                 return (
                     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-green-50 flex items-center justify-center p-4">
                         <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md border-t-4 border-teal-700">
-                            <img src="./assets/DiLO.png" alt="Logo" className="h-24 mx-auto mb-6 block" 
-                                 onError={(e) => e.target.src="https://images.seeklogo.com/logo-png/26/2/szybka-terapia-onkologiczna-logo-png_seeklogo-268047.png"} />
-                            <h1 className="text-2xl font-bold text-center text-gray-800 mb-8 tracking-tight">Logowanie</h1>
+                            <img src="./assets/DiLO.png" alt="Logo" className="h-24 mx-auto mb-6 block" onError={(e) => e.target.src="https://images.seeklogo.com/logo-png/26/2/szybka-terapia-onkologiczna-logo-png_seeklogo-268047.png"} />
+                            <h1 className="text-2xl font-bold text-center mb-8">Logowanie</h1>
                             <div className="space-y-4">
-                                <select 
-                                    onChange={(e) => setSelectedLogin(e.target.value)} 
-                                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-600 outline-none bg-gray-50"
-                                >
+                                <select onChange={(e) => setSelectedLogin(e.target.value)} className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-600 outline-none">
                                     <option value="">Wybierz koordynatora</option>
-                                    {Object.entries(coordinatorsMap).map(([login, name]) => (
-                                        <option key={login} value={login}>{name}</option>
-                                    ))}
+                                    {Object.entries(coordinatorsMap).map(([login, name]) => (<option key={login} value={login}>{name}</option>))}
                                 </select>
-                                <input 
-                                    type="password" 
-                                    placeholder="Hasło" 
-                                    onKeyPress={handleKeyPress}
-                                    onChange={(e) => setPassword(e.target.value)} 
-                                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-600 outline-none bg-gray-50" 
-                                />
-                                <button 
-                                    onClick={handleLogin} 
-                                    className="w-full bg-teal-700 text-white py-3 rounded-lg hover:bg-teal-800 transition-all font-bold shadow-lg active:scale-95"
-                                >
-                                    Zaloguj się
-                                </button>
+                                <input type="password" placeholder="Hasło" onKeyPress={handleKeyPress} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-600 outline-none" />
+                                <button onClick={handleLogin} className="w-full bg-teal-700 text-white py-3 rounded-lg font-bold shadow-lg">Zaloguj się</button>
                             </div>
                         </div>
                     </div>
@@ -126,10 +137,9 @@
 
             return (
                 <div className="min-h-screen bg-gray-50 flex">
-                    <div className="w-72 bg-white shadow-xl flex flex-col z-10 border-r border-gray-100">
+                    <div className="w-72 bg-white shadow-xl flex flex-col border-r border-gray-100">
                         <div className="p-8 border-b text-center">
-                            <img src="./assets/DiLO.png" className="h-12 mx-auto mb-4" onError={(e) => e.target.style.display='none'}/>
-                            <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Koordynator STO</p>
+                            <img src="./assets/DiLO.png" className="h-12 mx-auto mb-4" />
                             <p className="font-extrabold text-teal-900 leading-tight">{currentUser.fullName}</p>
                         </div>
                         <nav className="flex-1 p-4 space-y-2">
@@ -138,79 +148,44 @@
                                 <span className="font-medium">Dashboard</span>
                             </div>
                             
-                            {isDataLoaded && (
-                                <div className="mt-6 px-3 py-3 bg-green-50 rounded-xl border border-green-100">
-                                    <div className="flex items-center gap-2 text-green-700 text-[10px] font-black tracking-tighter uppercase">
-                                        <span className="relative flex h-2 w-2">
-                                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                                        </span>
-                                        Połączono z Google Drive
-                                    </div>
+                            <div className={`mt-6 px-3 py-3 rounded-xl border ${isDataLoaded ? 'bg-green-50 border-green-100 text-green-700' : 'bg-orange-50 border-orange-100 text-orange-700'}`}>
+                                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                                    <span className={`h-2 w-2 rounded-full ${isDataLoaded ? 'bg-green-500 animate-ping' : 'bg-orange-500'}`}></span>
+                                    {isDataLoaded ? 'Połączono z Google Drive' : 'Tryb Offline (Brak kluczy API)'}
                                 </div>
-                            )}
+                            </div>
                         </nav>
-                        <div className="p-4 border-t">
-                            <button onClick={() => {setIsLoggedIn(false); setIsDataLoaded(false);}} 
-                                    className="w-full py-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all flex items-center justify-center gap-2 text-xs font-black uppercase">
-                                <i data-lucide="x-circle" className="w-4 h-4"></i> Wyloguj się
-                            </button>
-                        </div>
+                        <button onClick={() => {setIsLoggedIn(false); setIsDataLoaded(false);}} className="m-4 py-3 text-red-500 hover:bg-red-50 rounded-xl transition-all flex items-center justify-center gap-2 text-xs font-black uppercase">
+                            <i data-lucide="x-circle" className="w-4 h-4"></i> Wyloguj się
+                        </button>
                     </div>
 
                     <div className="flex-1 p-10 overflow-auto">
                         <header className="flex justify-between items-center mb-10 bg-white p-8 rounded-[32px] shadow-sm border border-gray-100">
                             <div>
-                                <h1 className="text-3xl font-black text-gray-800 tracking-tight">Witaj, {currentUser.fullName.split(' ')[0]}!</h1>
-                                {isDataLoaded ? (
-                                    <p className="text-green-600 text-sm font-semibold flex items-center gap-1.5 mt-1">
-                                        <i data-lucide="check-circle" className="w-4 h-4"></i> Aktywna sesja: STO_Cloud_2026
-                                    </p>
-                                ) : (
-                                    <p className="text-orange-500 text-sm font-medium mt-1 animate-pulse">Trwa weryfikacja zasobów...</p>
-                                )}
+                                <h1 className="text-3xl font-black text-gray-800 tracking-tight tracking-tight">Witaj, {currentUser.fullName.split(' ')[0]}!</h1>
+                                <p className="text-gray-500 text-sm mt-1">Status bazy: {isDataLoaded ? 'Zsynchronizowano z Arkuszem' : 'Korzystanie z danych testowych'}</p>
                             </div>
                             <div className="bg-gray-50 px-6 py-3 rounded-2xl border border-gray-100 text-right">
-                                <p className="text-2xl font-black text-teal-800 leading-none tabular-nums">{currentTime.toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'})}</p>
-                                <p className="text-[10px] font-black text-gray-400 uppercase mt-1 tracking-widest">
-                                    {currentTime.toLocaleDateString('pl-PL', {day: 'numeric', month: 'long'})}
-                                </p>
+                                <p className="text-2xl font-black text-teal-800 tabular-nums">{currentTime.toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'})}</p>
                             </div>
                         </header>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                                <div className="w-12 h-12 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center mb-6">
-                                    <i data-lucide="phone" className="w-6 h-6"></i>
-                                </div>
-                                <h3 className="text-gray-400 text-xs font-black uppercase tracking-widest">Telefony</h3>
-                                <p className="text-5xl font-black text-gray-800 mt-2">0</p>
-                                <div className="mt-4 flex items-center gap-1.5 text-green-500 text-[10px] font-bold uppercase">
-                                    <i data-lucide="check-circle" className="w-3 h-3"></i> Wszystko wykonane
-                                </div>
-                            </div>
-                            
-                            <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                                <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
-                                    <i data-lucide="users" className="w-6 h-6"></i>
-                                </div>
-                                <h3 className="text-gray-400 text-xs font-black uppercase tracking-widest">Karty DiLO</h3>
-                                <p className="text-5xl font-black text-gray-800 mt-2">{isDataLoaded ? '12' : '--'}</p>
-                                <p className="text-[10px] text-gray-400 mt-4 italic font-bold">Synchronizacja z Arkuszem</p>
-                            </div>
-                        </div>
-
-                        <div className="mt-12 bg-teal-950 rounded-[48px] p-16 text-white relative shadow-2xl overflow-hidden min-h-[350px] flex items-center">
-                            <div className="relative z-10 max-w-2xl">
-                                <h2 className="text-5xl font-black mb-8 leading-[1.1] italic">
-                                    "W onkologii liczy się <br/><span className="text-teal-400">każda sekunda."</span>
-                                </h2>
-                                <p className="text-teal-100/60 font-medium text-xl leading-relaxed">
-                                    Zintegrowany system wsparcia Szybkiej Terapii Onkologicznej. <br/>Zoptymalizowano dla: {currentUser.fullName}.
-                                </p>
-                            </div>
-                            <div className="absolute right-[-5%] bottom-[-10%] opacity-10">
-                                <i data-lucide="trending-up" className="w-[500px] h-[500px]"></i>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                            <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100">
+                                <h3 className="text-gray-400 text-xs font-black uppercase tracking-widest mb-6">Lista pacjentów z arkusza</h3>
+                                {patients.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {patients.map(p => (
+                                            <div key={p.id} className="flex justify-between p-3 bg-gray-50 rounded-lg">
+                                                <span className="font-bold">{p.patient}</span>
+                                                <span className="text-teal-600">{p.phone}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-400 italic text-center py-10">Wprowadź klucze API w kodzie, aby załadować prawdziwe dane...</p>
+                                )}
                             </div>
                         </div>
                     </div>

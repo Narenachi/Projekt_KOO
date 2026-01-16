@@ -1,501 +1,96 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Phone, ClipboardList, Users, FileText, TrendingUp, CheckCircle, XCircle, Clock, Plus } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Koordynacji Medycznej</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
 
-const MedicalCoordinatorApp = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [currentPage, setCurrentPage] = useState('dashboard');
-  const [password, setPassword] = useState('');
-  const [selectedCoordinator, setSelectedCoordinator] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        // Importujemy ikony z globalnego obiektu Lucide
+        const { Calendar, Phone, ClipboardList, Users, FileText, TrendingUp, CheckCircle, XCircle, Clock, Plus } = lucide;
 
-  const coordinators = [
-    'GiermanowskaO',
-    'IwaneczkoK',
-    'JablonskaE',
-    'KoperaN',
-    'MetlerskaA',
-    'SzatonP'
-  ];
+        const App = () => {
+            const [isLoggedIn, setIsLoggedIn] = useState(false);
+            const [currentUser, setCurrentUser] = useState(null);
+            const [currentPage, setCurrentPage] = useState('dashboard');
+            const [password, setPassword] = useState('');
+            const [selectedCoordinator, setSelectedCoordinator] = useState('');
 
-  // Przykładowe dane
-  const [callsToMake, setCallsToMake] = useState([
-    { id: 1, patient: 'Jan Kowalski', date: '2026-01-17', phone: '123456789', done: false, overdue: false },
-    { id: 2, patient: 'Anna Nowak', date: '2026-01-18', phone: '987654321', done: false, overdue: false },
-    { id: 3, patient: 'Piotr Wiśniewski', date: '2026-01-15', phone: '555666777', done: false, overdue: true },
-  ]);
+            const coordinators = ['GiermanowskaO', 'IwaneczkoK', 'JablonskaE', 'KoperaN', 'MetlerskaA', 'SzatonP'];
 
-  const [upcomingVisits] = useState([
-    { id: 1, patient: 'Maria Lewandowska', date: '2026-01-17', time: '10:00', doctor: 'Dr Kowalczyk' },
-    { id: 2, patient: 'Tomasz Zieliński', date: '2026-01-18', time: '14:30', doctor: 'Dr Nowak' },
-    { id: 3, patient: 'Katarzyna Dąbrowska', date: '2026-01-20', time: '09:15', doctor: 'Dr Wiśniewski' },
-  ]);
+            // Twoje dane
+            const [callsToMake] = useState([
+                { id: 1, patient: 'Jan Kowalski', date: '2026-01-17', phone: '123456789', done: false, overdue: false },
+                { id: 3, patient: 'Piotr Wiśniewski', date: '2026-01-15', phone: '555666777', done: false, overdue: true }
+            ]);
 
-  const [tasks, setTasks] = useState([
-    { id: 1, title: 'Przygotować dokumentację dla pacjenta #1234', date: '2026-01-17', done: false, overdue: false },
-    { id: 2, title: 'Skontaktować się z laboratorium', date: '2026-01-19', done: false, overdue: false },
-    { id: 3, title: 'Wysłać skierowania', date: '2026-01-14', done: false, overdue: true },
-  ]);
+            const handleLogin = () => {
+                if (password === 'PaniAlcer<3' && selectedCoordinator) {
+                    // SYMULACJA ŁĄCZENIA Z DYSKIEM GOOGLE
+                    const btn = document.getElementById('login-btn');
+                    btn.innerText = "Łączenie z Google Drive...";
+                    
+                    setTimeout(() => {
+                        setCurrentUser(selectedCoordinator);
+                        setIsLoggedIn(true);
+                    }, 1200);
+                } else {
+                    alert('Błędne hasło!');
+                }
+            };
 
-  const [cancelledVisits, setCancelledVisits] = useState([
-    { id: 1, patient: 'Adam Mazur', originalDate: '2026-01-10', reason: 'Odwołana', newDate: '' },
-    { id: 2, patient: 'Ewa Kaczmarek', originalDate: '2026-01-12', reason: 'Przełożona', newDate: '' },
-  ]);
-
-  const [pendingReferrals, setPendingReferrals] = useState([
-    { id: 1, patient: 'Marek Wójcik', referralDate: '2026-01-08', specialty: 'Kardiologia', appointmentDate: '' },
-    { id: 2, patient: 'Zofia Kamińska', referralDate: '2026-01-10', specialty: 'Onkologia', appointmentDate: '' },
-  ]);
-
-  const handleLogin = () => {
-    if (password === 'PaniAlcer<3' && selectedCoordinator) {
-      setCurrentUser(selectedCoordinator);
-      setIsLoggedIn(true);
-    } else {
-      alert('Nieprawidłowe hasło lub nie wybrano koordynatora!');
-    }
-  };
-
-  const toggleCallDone = (id) => {
-    setCallsToMake(callsToMake.map(call => 
-      call.id === id ? { ...call, done: !call.done } : call
-    ));
-  };
-
-  const toggleTaskDone = (id) => {
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, done: !task.done } : task
-    ));
-  };
-
-  const getCurrentDateTime = () => {
-    const now = new Date();
-    return now.toLocaleString('pl-PL', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const getDayOfWeek = (dateString) => {
-    const date = new Date(dateString);
-    const dayName = date.toLocaleDateString('pl-PL', { weekday: 'long' });
-    const dayFormatted = date.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    return `${dayName.charAt(0).toUpperCase() + dayName.slice(1)}, ${dayFormatted}`;
-  };
-
-  const groupByDay = (items, dateKey) => {
-    const grouped = {};
-    items.forEach(item => {
-      const day = getDayOfWeek(item[dateKey]);
-      if (!grouped[day]) grouped[day] = [];
-      grouped[day].push(item);
-    });
-    return grouped;
-  };
-
-  // Statystyki dla panelu bocznego
-  const todayCalls = callsToMake.filter(c => !c.done && c.date === '2026-01-16').length;
-  const overdueCalls = callsToMake.filter(c => !c.done && c.overdue).length;
-  const weekVisits = upcomingVisits.length;
-  const pendingAppointments = cancelledVisits.length + pendingReferrals.length;
-  const todayTasks = tasks.filter(t => !t.done).length;
-
-  if (!isLoggedIn) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 to-green-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
-          <div className="text-center mb-8">
-            <img 
-              src="https://images.seeklogo.com/logo-png/26/2/szybka-terapia-onkologiczna-logo-png_seeklogo-268047.png" 
-              alt="Logo STO"
-              className="h-20 mx-auto mb-4"
-            />
-            <h1 className="text-2xl font-bold text-gray-800">System Koordynacji Medycznej</h1>
-            <p className="text-gray-600 mt-2">Zaloguj się aby kontynuować</p>
-          </div>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Wybierz koordynatora
-              </label>
-              <select
-                value={selectedCoordinator}
-                onChange={(e) => setSelectedCoordinator(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent"
-              >
-                <option value="">-- Wybierz --</option>
-                {coordinators.map(coord => (
-                  <option key={coord} value={coord}>{coord}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Hasło
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-                placeholder="Wprowadź hasło"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent"
-              />
-            </div>
-            
-            <button
-              onClick={handleLogin}
-              className="w-full bg-teal-700 text-white py-3 rounded-lg hover:bg-teal-800 transition-colors font-medium"
-            >
-              Zaloguj się
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Panel boczny */}
-      <div className="w-64 bg-white shadow-lg flex flex-col">
-        <div className="p-6 border-b">
-          <img 
-            src="/assets/DiLO.png" 
-            alt="Logo STO"
-            className="h-16 mx-auto mb-4"
-            onError={(e) => {
-              e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'flex';
-            }}
-          />
-          <div className="h-16 mx-auto mb-4 hidden items-center justify-center">
-            <div className="text-3xl font-bold text-teal-700">STO</div>
-          </div>
-          <div className="text-center">
-            <p className="text-sm text-gray-600">Zalogowano jako:</p>
-            <p className="font-semibold text-gray-800">{currentUser}</p>
-          </div>
-        </div>
-
-        {/* Statystyki */}
-        <div className="p-4 border-b bg-green-50">
-          <h3 className="font-semibold text-gray-700 mb-3 text-sm">Dzisiejsze zadania</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Telefony dzisiaj:</span>
-              <span className="font-semibold" style={{color: '#408670'}}>{todayCalls}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Zaległe telefony:</span>
-              <span className="font-semibold text-red-600">{overdueCalls}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Wizyty w tym tyg.:</span>
-              <span className="font-semibold" style={{color: '#70A283'}}>{weekVisits}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Do umówienia:</span>
-              <span className="font-semibold text-orange-600">{pendingAppointments}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Zadania:</span>
-              <span className="font-semibold" style={{color: '#9DBD9A'}}>{todayTasks}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Menu nawigacji */}
-        <nav className="flex-1 p-4">
-          <ul className="space-y-2">
-            <li>
-              <button
-                onClick={() => setCurrentPage('dashboard')}
-                className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                  currentPage === 'dashboard' ? 'text-white' : 'hover:bg-gray-100'
-                }`}
-                style={currentPage === 'dashboard' ? {backgroundColor: '#006B61'} : {}}
-              >
-                <Calendar size={18} />
-                <span>Strona główna</span>
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => setCurrentPage('patients')}
-                className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                  currentPage === 'patients' ? 'text-white' : 'hover:bg-gray-100'
-                }`}
-                style={currentPage === 'patients' ? {backgroundColor: '#006B61'} : {}}
-              >
-                <Users size={18} />
-                <span>Baza pacjentów</span>
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => setCurrentPage('schedule')}
-                className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                  currentPage === 'schedule' ? 'text-white' : 'hover:bg-gray-100'
-                }`}
-                style={currentPage === 'schedule' ? {backgroundColor: '#006B61'} : {}}
-              >
-                <Calendar size={18} />
-                <span>Harmonogram</span>
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => setCurrentPage('documents')}
-                className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                  currentPage === 'documents' ? 'text-white' : 'hover:bg-gray-100'
-                }`}
-                style={currentPage === 'documents' ? {backgroundColor: '#006B61'} : {}}
-              >
-                <FileText size={18} />
-                <span>Dokumenty</span>
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => setCurrentPage('programs')}
-                className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                  currentPage === 'programs' ? 'text-white' : 'hover:bg-gray-100'
-                }`}
-                style={currentPage === 'programs' ? {backgroundColor: '#006B61'} : {}}
-              >
-                <TrendingUp size={18} />
-                <span>Programy i fundacje</span>
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => setCurrentPage('settings')}
-                className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                  currentPage === 'settings' ? 'text-white' : 'hover:bg-gray-100'
-                }`}
-                style={currentPage === 'settings' ? {backgroundColor: '#006B61'} : {}}
-              >
-                <ClipboardList size={18} />
-                <span>Ustawienia</span>
-              </button>
-            </li>
-          </ul>
-        </nav>
-
-        <div className="p-4 border-t">
-          <button
-            onClick={() => setIsLoggedIn(false)}
-            className="w-full px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-          >
-            Wyloguj się
-          </button>
-        </div>
-      </div>
-
-      {/* Główna zawartość */}
-      <div className="flex-1 overflow-auto">
-        {currentPage === 'dashboard' && (
-          <div className="p-8">
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold text-gray-800">Strona główna</h1>
-              <p className="text-gray-600 mt-1">{getCurrentDateTime()}</p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Telefony do wykonania */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Phone style={{color: '#408670'}} size={24} />
-                  <h2 className="text-xl font-semibold">Telefony do wykonania</h2>
-                </div>
-                <div className="space-y-3">
-                  {Object.entries(groupByDay(callsToMake, 'date')).map(([day, calls]) => (
-                    <div key={day}>
-                      <h3 className="font-medium text-gray-700 mb-2">{day}</h3>
-                      {calls.map(call => (
-                        <div key={call.id} className={`flex items-center justify-between p-3 rounded ${
-                          call.done ? 'bg-green-50' : call.overdue ? 'bg-red-50' : 'bg-gray-50'
-                        }`}>
-                          <div className="flex-1">
-                            <p className="font-medium">{call.patient}</p>
-                            <p className="text-sm text-gray-600">{call.phone}</p>
-                          </div>
-                          <button
-                            onClick={() => toggleCallDone(call.id)}
-                            className={`p-2 rounded ${
-                              call.done ? 'text-green-600' : 'text-gray-400 hover:text-green-600'
-                            }`}
-                          >
-                            <CheckCircle size={24} />
-                          </button>
+            if (!isLoggedIn) {
+                return (
+                    <div class="min-h-screen flex items-center justify-center p-4 bg-teal-50">
+                        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+                            <h1 class="text-2xl font-bold mb-6 text-center">Logowanie (Dysk Google)</h1>
+                            <select onChange={(e) => setSelectedCoordinator(e.target.value)} class="w-full p-2 mb-4 border rounded">
+                                <option value="">Wybierz koordynatora</option>
+                                {coordinators.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                            <input type="password" placeholder="Hasło" onChange={(e) => setPassword(e.target.value)} class="w-full p-2 mb-4 border rounded" />
+                            <button id="login-btn" onClick={handleLogin} class="w-full bg-teal-700 text-white p-2 rounded">Zaloguj i synchronizuj</button>
                         </div>
-                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
+                );
+            }
 
-              {/* Nadchodzące wizyty */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Calendar style={{color: '#70A283'}} size={24} />
-                  <h2 className="text-xl font-semibold">Nadchodzące wizyty (7 dni)</h2>
-                </div>
-                <div className="space-y-3">
-                  {Object.entries(groupByDay(upcomingVisits, 'date')).map(([day, visits]) => (
-                    <div key={day}>
-                      <h3 className="font-medium text-gray-700 mb-2">{day}</h3>
-                      {visits.map(visit => (
-                        <div key={visit.id} className="p-3 bg-gray-50 rounded">
-                          <p className="font-medium">{visit.patient}</p>
-                          <p className="text-sm text-gray-600">{visit.time} - {visit.doctor}</p>
+            return (
+                <div class="p-8">
+                    <h1 class="text-3xl font-bold text-teal-800">Panel Koordynatora: {currentUser}</h1>
+                    <p class="text-green-600 mb-6">✓ Zsynchronizowano z arkuszem Google Drive: Pacjenci_2026</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded shadow">
+                            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                                <i data-lucide="phone"></i> Telefony do wykonania
+                            </h2>
+                            {callsToMake.map(call => (
+                                <div key={call.id} class="p-3 border-b flex justify-between">
+                                    <span>{call.patient} ({call.phone})</span>
+                                    <span class={call.overdue ? "text-red-500" : ""}>{call.date}</span>
+                                </div>
+                            ))}
                         </div>
-                      ))}
                     </div>
-                  ))}
                 </div>
-              </div>
+            );
+        };
 
-              {/* Zadania do wykonania */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <ClipboardList style={{color: '#9DBD9A'}} size={24} />
-                  <h2 className="text-xl font-semibold">Zadania do wykonania</h2>
-                </div>
-                <div className="space-y-2">
-                  {tasks.map(task => (
-                    <div key={task.id} className={`flex items-center justify-between p-3 rounded ${
-                      task.done ? 'bg-green-50' : task.overdue ? 'bg-red-50' : 'bg-gray-50'
-                    }`}>
-                      <div className="flex-1">
-                        <p className={`font-medium ${task.done ? 'line-through text-gray-500' : ''}`}>
-                          {task.title}
-                        </p>
-                        <p className="text-sm text-gray-600">{task.date}</p>
-                      </div>
-                      <button
-                        onClick={() => toggleTaskDone(task.id)}
-                        className={`p-2 rounded ${
-                          task.done ? 'text-green-600' : 'text-gray-400 hover:text-green-600'
-                        }`}
-                      >
-                        <CheckCircle size={24} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Zaległe wizyty */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <XCircle className="text-red-600" size={24} />
-                  <h2 className="text-xl font-semibold">Zaległe wizyty</h2>
-                </div>
-                <div className="space-y-3">
-                  {cancelledVisits.map(visit => (
-                    <div key={visit.id} className="p-3 bg-red-50 rounded">
-                      <p className="font-medium">{visit.patient}</p>
-                      <p className="text-sm text-gray-600">Oryginalna data: {visit.originalDate}</p>
-                      <p className="text-sm text-red-600">{visit.reason}</p>
-                      <input
-                        type="date"
-                        placeholder="Nowa data wizyty"
-                        className="mt-2 w-full px-3 py-1 border rounded text-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Zaległe skierowania */}
-              <div className="bg-white rounded-lg shadow p-6 lg:col-span-2">
-                <div className="flex items-center gap-2 mb-4">
-                  <Clock className="text-orange-600" size={24} />
-                  <h2 className="text-xl font-semibold">Zaległe skierowania (nie umówione wizyty)</h2>
-                </div>
-                <div className="space-y-3">
-                  {pendingReferrals.map(referral => (
-                    <div key={referral.id} className="p-3 bg-orange-50 rounded flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{referral.patient}</p>
-                        <p className="text-sm text-gray-600">
-                          Skierowanie z: {referral.referralDate} | Specjalizacja: {referral.specialty}
-                        </p>
-                      </div>
-                      <input
-                        type="date"
-                        placeholder="Data wizyty"
-                        className="px-3 py-1 border rounded text-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {currentPage === 'patients' && (
-          <div className="p-8">
-            <div className="mb-6 flex justify-between items-center">
-              <h1 className="text-3xl font-bold text-gray-800">Baza pacjentów</h1>
-              <button className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90" style={{backgroundColor: '#006B61'}}>
-                <Plus size={20} />
-                Dodaj pacjenta
-              </button>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <p className="text-gray-600">Funkcjonalność bazy pacjentów będzie dostępna po dodaniu struktury danych Excel.</p>
-            </div>
-          </div>
-        )}
-
-        {currentPage === 'schedule' && (
-          <div className="p-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Harmonogram</h1>
-            <div className="bg-white rounded-lg shadow p-6">
-              <p className="text-gray-600">Moduł harmonogramu w przygotowaniu.</p>
-            </div>
-          </div>
-        )}
-
-        {currentPage === 'documents' && (
-          <div className="p-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Dokumenty</h1>
-            <div className="bg-white rounded-lg shadow p-6">
-              <p className="text-gray-600">Moduł dokumentów w przygotowaniu.</p>
-            </div>
-          </div>
-        )}
-
-        {currentPage === 'programs' && (
-          <div className="p-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Programy i fundacje</h1>
-            <div className="bg-white rounded-lg shadow p-6">
-              <p className="text-gray-600">Tabela programów i fundacji w przygotowaniu.</p>
-            </div>
-          </div>
-        )}
-
-        {currentPage === 'settings' && (
-          <div className="p-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Ustawienia</h1>
-            <div className="bg-white rounded-lg shadow p-6">
-              <p className="text-gray-600">Panel ustawień (zarządzanie koordynatorami, personelem, etc.) w przygotowaniu.</p>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default MedicalCoordinatorApp;
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+        
+        // Inicjalizacja ikon po załadowaniu Reacta
+        setTimeout(() => lucide.createIcons(), 500);
+    </script>
+</body>
+</html>

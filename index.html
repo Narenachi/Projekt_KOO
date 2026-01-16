@@ -10,11 +10,11 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,900;1,900&family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8faf9; }
+        .font-title { font-family: 'Playfair Display', serif; }
         .text-brand { color: #006B61; }
         .bg-brand { background-color: #006B61; }
-        .bg-brand-light { background-color: #9DBD9A; }
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -25,11 +25,14 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
+        const coordinators = ['WSZYSCY', 'Oliwia Giermanowska', 'Klaudia Iwaneczko', 'Emilia Jabłońska', 'Natalia Kopera', 'Anna Metlerska', 'Patrycja Szaton'];
+
         // --- KOMPONENT: STRONA GŁÓWNA ---
         const HomePage = ({ tasks, onAddTask, onDeleteTask, user }) => {
             const [tText, setTText] = useState('');
             const [tDate, setTDate] = useState('');
-            const [tPatient, setTPatient] = useState('');
+            const [tPatient, setTPatient] = useState('Nie dotyczy pacjenta');
+            const [tCoord, setTCoord] = useState('WSZYSCY');
             const days = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'];
 
             useEffect(() => { lucide.createIcons(); });
@@ -38,12 +41,12 @@
                 <div className="space-y-10 animate-fadeIn">
                     <section className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
                         <h2 className="flex items-center gap-2 font-black text-[#006B61] mb-8 uppercase text-xs tracking-widest">
-                            <i data-lucide="phone" className="w-5 h-5"></i> Połączenia na najbliższe 7 dni
+                            <i data-lucide="phone" className="w-5 h-5"></i> Połączenia (najbliższe 7 dni)
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
                             {days.map(day => (
-                                <div key={day} className="flex flex-col gap-3">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase text-center border-b pb-2">{day}</p>
+                                <div key={day} className="flex flex-col gap-3 border-r last:border-none border-gray-100 px-2">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase text-center pb-2">{day}</p>
                                     <div className="text-[9px] text-gray-300 italic text-center py-4">Brak zaplanowanych połączeń</div>
                                 </div>
                             ))}
@@ -56,9 +59,9 @@
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
                             {days.map(day => (
-                                <div key={day} className="flex flex-col gap-3">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase text-center border-b pb-2">{day}</p>
-                                    <div className="text-[9px] text-gray-300 italic text-center py-4 text-gray-200">Brak wizyt</div>
+                                <div key={day} className="flex flex-col gap-3 border-r last:border-none border-gray-100 px-2">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase text-center pb-2">{day}</p>
+                                    <div className="text-[9px] text-gray-200 italic text-center py-4">Brak wizyt</div>
                                 </div>
                             ))}
                         </div>
@@ -68,22 +71,46 @@
                         <h2 className="flex items-center gap-2 font-black mb-8 uppercase text-xs tracking-widest text-[#C9D9B6]">
                             <i data-lucide="clipboard-list" className="w-5 h-5"></i> Zadania do wykonania (Najbliższy miesiąc)
                         </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-10 bg-white/10 p-6 rounded-3xl border border-white/10">
-                            <input type="text" placeholder="Treść zadania..." value={tText} onChange={e=>setTText(e.target.value)} className="bg-transparent border-b border-[#9DBD9A] p-2 text-sm outline-none placeholder:text-white/40" />
-                            <input type="text" placeholder="Pacjent..." value={tPatient} onChange={e=>setTPatient(e.target.value)} className="bg-transparent border-b border-[#9DBD9A] p-2 text-sm outline-none placeholder:text-white/40" />
-                            <input type="date" value={tDate} onChange={e=>setTDate(e.target.value)} className="bg-transparent border-b border-[#9DBD9A] p-2 text-sm outline-none" />
-                            <button onClick={()=>{onAddTask(tText, tDate, tPatient); setTText(''); setTDate(''); setTPatient('')}} className="bg-[#C9D9B6] text-[#006B61] font-black py-2 rounded-xl uppercase text-[10px]">Dodaj Zadanie</button>
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-10 bg-white/10 p-6 rounded-3xl border border-white/10">
+                            <div className="md:col-span-2 space-y-2">
+                                <label className="text-[9px] uppercase font-bold text-teal-200 ml-1">Treść</label>
+                                <input type="text" placeholder="Co trzeba zrobić?" value={tText} onChange={e=>setTText(e.target.value)} className="w-full bg-transparent border-b border-[#9DBD9A] p-2 text-sm outline-none placeholder:text-white/40" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[9px] uppercase font-bold text-teal-200 ml-1">Koordynator</label>
+                                <select value={tCoord} onChange={e=>setTCoord(e.target.value)} className="w-full bg-teal-800 text-white text-xs p-2 rounded-lg outline-none">
+                                    {coordinators.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[9px] uppercase font-bold text-teal-200 ml-1">Pacjent</label>
+                                <select value={tPatient} onChange={e=>setTPatient(e.target.value)} className="w-full bg-teal-800 text-white text-xs p-2 rounded-lg outline-none">
+                                    <option>Nie dotyczy pacjenta</option>
+                                    <option>KAŻDY</option>
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[9px] uppercase font-bold text-teal-200 ml-1">Data</label>
+                                <div className="flex gap-2">
+                                    <input type="date" value={tDate} onChange={e=>setTDate(e.target.value)} className="bg-transparent border-b border-[#9DBD9A] p-1 text-xs outline-none flex-1" />
+                                    <button onClick={()=>{onAddTask(tText, tDate, tPatient, tCoord); setTText(''); setTDate('');}} className="bg-[#C9D9B6] text-[#006B61] font-black p-2 rounded-xl uppercase text-[10px] hover:scale-105 transition-all">
+                                        <i data-lucide="plus" className="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         <div className="space-y-4">
                             {tasks.map(t => (
-                                <div key={t.id} className="bg-white/5 border border-white/10 p-6 rounded-3xl flex justify-between items-start">
+                                <div key={t.id} className="bg-white/5 border border-white/10 p-6 rounded-3xl flex justify-between items-start hover:bg-white/10 transition-all">
                                     <div>
-                                        <p className="text-[10px] font-black text-[#C9D9B6] uppercase tracking-widest">Termin: {t.date}</p>
-                                        <p className="text-[10px] font-bold text-white/60 uppercase">Koordynator: {user}</p>
-                                        <p className="font-bold text-lg leading-tight mt-2">{t.text}</p>
-                                        <p className="text-xs font-medium text-[#9DBD9A]">Pacjent: {t.patient}</p>
+                                        <div className="flex gap-2 mb-2">
+                                            <span className="text-[9px] font-black bg-teal-900 px-2 py-0.5 rounded text-teal-100 uppercase tracking-widest">Termin: {t.date}</span>
+                                            <span className="text-[9px] font-black bg-white/10 px-2 py-0.5 rounded text-white uppercase tracking-widest">Koordynator: {t.coord}</span>
+                                        </div>
+                                        <p className="font-bold text-lg leading-tight">{t.text}</p>
+                                        <p className="text-xs font-medium text-[#9DBD9A] mt-2 italic">Pacjent: {t.patient}</p>
                                     </div>
-                                    <button onClick={()=>onDeleteTask(t.id)} className="bg-[#408670] px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest">Wykonano</button>
+                                    <button onClick={()=>{onDeleteTask(t.id)}} className="bg-[#408670] px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-[#006B61] transition-colors">Wykonano</button>
                                 </div>
                             ))}
                         </div>
@@ -92,97 +119,49 @@
             );
         };
 
-        // --- KOMPONENT: HARMONOGRAMY ---
-        const SchedulesPage = () => {
-            useEffect(() => { lucide.createIcons(); });
-            return (
-                <div className="space-y-6 animate-fadeIn">
-                    <div className="bg-white p-10 rounded-[40px] shadow-sm border border-gray-100">
-                        <h2 className="text-2xl font-black text-[#006B61] uppercase tracking-tighter mb-8 italic">Filtrowanie Harmonogramów</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Koordynatorzy</label>
-                                <select className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl font-bold text-gray-600 outline-none focus:border-[#006B61]">
-                                    <option>Wszyscy</option>
-                                    <option>Oliwia Giermanowska</option>
-                                    <option>Klaudia Iwaneczko</option>
-                                    <option>Emilia Jabłońska</option>
-                                </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Pacjenci</label>
-                                <select className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl font-bold text-gray-600 outline-none focus:border-[#006B61]">
-                                    <option>Wybierz pacjenta</option>
-                                </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Personel</label>
-                                <select className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl font-bold text-gray-600 outline-none focus:border-[#006B61]">
-                                    <option>Specjalizacja / Medyk</option>
-                                    <option>Radioterapeuta</option>
-                                    <option>Chirurg Onkolog</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // --- KOMPONENT: DOKUMENTY ---
-        const DocumentsPage = () => {
-            useEffect(() => { lucide.createIcons(); });
-            return (
-                <div className="animate-fadeIn bg-white p-10 rounded-[40px] shadow-sm border border-gray-100 min-h-[500px]">
-                    <h2 className="text-2xl font-black text-[#006B61] uppercase mb-10 tracking-tighter italic">Generator Dokumentów</h2>
-                    <div className="max-w-xl space-y-8">
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Wybierz rodzaj dokumentu</label>
-                            <select className="w-full p-5 bg-gray-50 border-2 border-gray-100 rounded-[24px] font-bold outline-none focus:border-[#006B61]">
-                                <option>Wniosek o Konsylium</option>
-                                <option>Karta Diagnostyki Wstępnej</option>
-                                <option>Zgoda na leczenie onkologiczne</option>
-                                <option>Raport Miesięczny Koordynatora</option>
-                            </select>
-                        </div>
-                        <button className="bg-[#006B61] text-white w-full py-5 rounded-[24px] font-black uppercase tracking-widest shadow-xl hover:scale-105 transition-all">
-                            Generuj Dokument (PDF)
-                        </button>
-                        <p className="text-center text-[10px] text-gray-300 font-medium uppercase italic">Dane zostaną automatycznie uzupełnione z Bazy Pacjentów</p>
-                    </div>
-                </div>
-            );
-        };
-
-        // --- APLIKACJA GŁÓWNA (App) ---
+        // --- APLIKACJA GŁÓWNA ---
         const App = () => {
             const [isLoggedIn, setIsLoggedIn] = useState(false);
             const [page, setPage] = useState('home');
             const [user, setUser] = useState('');
             const [tasks, setTasks] = useState([]);
+            const [now, setNow] = useState(new Date());
 
-            const coords = {
+            const coordinatorsMap = {
                 'GiermanowskaO': 'Oliwia Giermanowska', 'IwaneczkoK': 'Klaudia Iwaneczko',
                 'JablonskaE': 'Emilia Jabłońska', 'KoperaN': 'Natalia Kopera',
                 'MetlerskaA': 'Anna Metlerska', 'SzatonP': 'Patrycja Szaton'
             };
 
+            useEffect(() => {
+                const timer = setInterval(() => setNow(new Date()), 1000);
+                return () => clearInterval(timer);
+            }, []);
+
             useEffect(() => { lucide.createIcons(); }, [isLoggedIn, page, tasks]);
+
+            const formatDate = (date) => {
+                const options = { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' };
+                const time = date.toLocaleTimeString('pl-PL');
+                const day = date.toLocaleDateString('pl-PL', options);
+                return `${day}, ${time}`;
+            };
 
             if (!isLoggedIn) {
                 return (
-                    <div className="min-h-screen flex items-center justify-center p-6 bg-[#f8faf9]">
+                    <div className="min-h-screen flex items-center justify-center bg-[#f8faf9] p-6">
                         <div className="bg-white p-12 rounded-[50px] shadow-2xl w-full max-w-sm text-center border-b-[12px] border-[#006B61]">
                             <img src="./assets/DiLO.png" className="h-16 mx-auto mb-10" />
                             <select id="ls" className="w-full p-4 border-2 border-gray-100 rounded-2xl mb-4 font-bold outline-none bg-gray-50 focus:border-[#006B61]">
-                                <option value="">Login (ID)</option>
-                                {Object.keys(coords).map(l => <option key={l} value={l}>{l}</option>)}
+                                <option value="">Wybierz Login</option>
+                                {Object.keys(coordinatorsMap).map(l => <option key={l} value={l}>{l}</option>)}
                             </select>
                             <input id="ps" type="password" placeholder="Hasło" className="w-full p-4 border-2 border-gray-100 rounded-2xl mb-8 font-bold outline-none bg-gray-50 focus:border-[#006B61]" />
                             <button onClick={() => {
-                                if(document.getElementById('ls').value && document.getElementById('ps').value === 'PaniAlcer<3') {
-                                    setUser(coords[document.getElementById('ls').value]); setIsLoggedIn(true);
-                                } else alert('Błąd logowania!');
+                                const l = document.getElementById('ls').value;
+                                if(l && document.getElementById('ps').value === 'PaniAlcer<3') {
+                                    setUser(coordinatorsMap[l]); setIsLoggedIn(true);
+                                } else alert('Błąd!');
                             }} className="w-full bg-[#006B61] text-white p-5 rounded-2xl font-black uppercase tracking-widest shadow-xl">Zaloguj się</button>
                         </div>
                     </div>
@@ -194,8 +173,8 @@
                     <aside className="w-80 bg-white shadow-xl flex flex-col border-r border-gray-50">
                         <div className="p-10 border-b text-center">
                             <img src="./assets/DiLO.png" className="h-10 mx-auto mb-4" />
-                            <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-1 italic">Zalogowano:</p>
-                            <p className="font-black text-[#006B61] leading-tight">{user}</p>
+                            <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-1 italic">Koordynator:</p>
+                            <p className="font-black text-[#006B61] leading-tight text-sm">{user}</p>
                         </div>
                         <nav className="flex-1 p-8 space-y-4">
                             {[
@@ -210,33 +189,40 @@
                                 </div>
                             ))}
                         </nav>
-                        <button onClick={()=>setIsLoggedIn(false)} className="m-8 p-4 text-red-400 font-black text-[9px] uppercase border-2 border-red-50 rounded-2xl hover:bg-red-50 transition-all">Wyloguj się</button>
+                        <button onClick={()=>setIsLoggedIn(false)} className="m-8 p-4 text-red-400 font-black text-[9px] uppercase border-2 border-red-50 rounded-2xl hover:bg-red-50 transition-all font-bold">Wyloguj się</button>
                     </aside>
 
                     <main className="flex-1 p-12 overflow-auto">
                         <header className="flex justify-between items-center mb-12">
-                            <h1 className="text-4xl font-black text-gray-800 tracking-tighter uppercase italic">{page === 'home' ? 'Strona główna' : page === 'patients' ? 'Baza pacjentów' : page === 'schedules' ? 'Harmonogramy' : 'Dokumentacja'}</h1>
-                            <div className="text-right bg-white py-3 px-8 rounded-3xl shadow-sm border border-gray-50">
-                                <p className="text-2xl font-black text-[#006B61] leading-none tabular-nums">{new Date().toLocaleTimeString('pl-PL', {hour:'2-digit', minute:'2-digit'})}</p>
+                            <h1 className="text-5xl font-title italic text-gray-800 tracking-tighter">
+                                {page === 'home' ? 'Strona główna' : page === 'patients' ? 'Baza pacjentów' : page === 'schedules' ? 'Harmonogramy' : 'Dokumentacja'}
+                            </h1>
+                            <div className="text-right bg-white py-4 px-8 rounded-3xl shadow-sm border border-gray-50 border-b-4 border-teal-600">
+                                <p className="text-sm font-black text-[#006B61] uppercase tracking-tighter tabular-nums">
+                                    {formatDate(now)}
+                                </p>
                             </div>
                         </header>
 
-                        {page === 'home' && <HomePage user={user} tasks={tasks} onAddTask={(t,d,p)=>setTasks([...tasks,{id:Date.now(),text:t,date:d,patient:p}])} onDeleteTask={id=>setTasks(tasks.filter(tk=>tk.id!==id))} />}
+                        {page === 'home' && <HomePage user={user} tasks={tasks} onAddTask={(t,d,p,c)=>setTasks([...tasks,{id:Date.now(),text:t,date:d,patient:p,coord:c}])} onDeleteTask={id=>setTasks(tasks.filter(tk=>tk.id!==id))} />}
+                        
                         {page === 'patients' && (
                             <div className="bg-white p-10 rounded-[40px] shadow-sm border border-gray-100 animate-fadeIn min-h-[500px]">
                                 <div className="flex justify-between items-center mb-10">
-                                    <h2 className="text-2xl font-black text-[#006B61] uppercase tracking-tighter italic">Baza Pacjentów</h2>
+                                    <h2 className="text-4xl font-title italic text-[#006B61] tracking-tighter">Baza pacjentów</h2>
                                     <button className="bg-[#006B61] text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg">Dodaj nowego pacjenta</button>
                                 </div>
-                                <div className="relative mb-10">
-                                    <i data-lucide="search" className="absolute left-5 top-4 w-5 h-5 text-gray-300"></i>
-                                    <input type="text" placeholder="Szukaj pacjenta..." className="w-full bg-gray-50 p-4 pl-14 rounded-3xl outline-none focus:ring-2 focus:ring-[#006B61] font-bold text-gray-600 border-none" />
-                                </div>
-                                <p className="text-center text-gray-300 italic py-20">Baza pacjentów jest pusta...</p>
+                                <p className="text-center text-gray-300 italic py-20 uppercase font-black tracking-widest opacity-20 text-4xl">System gotowy do importu danych</p>
                             </div>
                         )}
-                        {page === 'schedules' && <SchedulesPage />}
-                        {page === 'docs' && <DocumentsPage />}
+                        
+                        {/* Pozostałe sekcje (puste dla designu) */}
+                        {['schedules', 'docs', 'funds'].includes(page) && (
+                            <div className="bg-white p-20 rounded-[40px] shadow-sm border border-gray-100 text-center animate-fadeIn">
+                                <h2 className="text-4xl font-title italic text-gray-300">Moduł {page}</h2>
+                                <p className="mt-4 text-[10px] font-black uppercase text-gray-400 tracking-[0.5em]">Synchronizacja z dyskiem...</p>
+                            </div>
+                        )}
                     </main>
                 </div>
             );

@@ -21,36 +21,49 @@
             const [isLoggedIn, setIsLoggedIn] = useState(false);
             const [isSyncing, setIsSyncing] = useState(false);
             const [syncProgress, setSyncProgress] = useState(0);
-            const [currentUser, setCurrentUser] = useState(null);
+            const [isDataLoaded, setIsDataLoaded] = useState(false);
+            const [currentUser, setCurrentUser] = useState({ login: '', fullName: '' });
             const [password, setPassword] = useState('');
-            const [selectedCoordinator, setSelectedCoordinator] = useState('');
+            const [selectedLogin, setSelectedLogin] = useState('');
             const [currentTime, setCurrentTime] = useState(new Date());
 
-            // Zegar aktualizowany co sekundę
+            // Baza koordynatorów
+            const coordinatorsMap = {
+                'GiermanowskaO': 'Oliwia Giermanowska',
+                'IwaneczkoK': 'Klaudia Iwaneczko',
+                'JablonskaE': 'Emilia Jabłońska',
+                'KoperaN': 'Natalia Kopera',
+                'MetlerskaA': 'Anna Metlerska',
+                'SzatonP': 'Patrycja Szaton'
+            };
+
             useEffect(() => {
                 const timer = setInterval(() => setCurrentTime(new Date()), 1000);
                 return () => clearInterval(timer);
             }, []);
 
-            // Obsługa ikon po każdej zmianie widoku
             useEffect(() => {
                 lucide.createIcons();
             });
 
             const handleLogin = () => {
-                if (password === 'PaniAlcer<3' && selectedCoordinator) {
+                if (password === 'PaniAlcer<3' && selectedLogin) {
                     setIsSyncing(true);
                     let progress = 0;
                     const interval = setInterval(() => {
-                        progress += 10;
+                        progress += 5;
                         setSyncProgress(progress);
                         if (progress >= 100) {
                             clearInterval(interval);
-                            setCurrentUser(selectedCoordinator);
+                            setCurrentUser({
+                                login: selectedLogin,
+                                fullName: coordinatorsMap[selectedLogin]
+                            });
                             setIsLoggedIn(true);
                             setIsSyncing(false);
+                            setIsDataLoaded(true);
                         }
-                    }, 150);
+                    }, 100);
                 } else {
                     alert('Nieprawidłowe dane logowania!');
                 }
@@ -63,12 +76,14 @@
             if (isSyncing) {
                 return (
                     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 text-center">
-                        <img src="./assets/DiLO.png" className="h-20 mb-8 animate-pulse" />
-                        <h2 className="text-xl font-semibold text-gray-700 mb-4">Synchronizacja z Google Drive...</h2>
-                        <div className="w-64 bg-gray-200 rounded-full h-2.5 mb-2">
-                            <div className="bg-teal-600 h-2.5 rounded-full transition-all duration-300" style={{width: `${syncProgress}%`}}></div>
+                        <img src="./assets/DiLO.png" className="h-20 mb-8 animate-bounce" 
+                             onError={(e) => e.target.src="https://images.seeklogo.com/logo-png/26/2/szybka-terapia-onkologiczna-logo-png_seeklogo-268047.png"}/>
+                        <h2 className="text-xl font-semibold text-gray-700 mb-2">Inicjowanie sesji...</h2>
+                        <p className="text-sm text-gray-400 mb-6 font-medium">Użytkownik: {coordinatorsMap[selectedLogin]}</p>
+                        <div className="w-64 bg-gray-100 rounded-full h-3 mb-2 overflow-hidden border">
+                            <div className="bg-teal-600 h-full transition-all duration-200" style={{width: `${syncProgress}%`}}></div>
                         </div>
-                        <p className="text-sm text-gray-500">{syncProgress}%</p>
+                        <p className="text-xs font-mono text-teal-600">Pobieranie danych z Google Drive: {syncProgress}%</p>
                     </div>
                 );
             }
@@ -76,22 +91,31 @@
             if (!isLoggedIn) {
                 return (
                     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-green-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
+                        <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md border-t-4 border-teal-700">
                             <img src="./assets/DiLO.png" alt="Logo" className="h-24 mx-auto mb-6 block" 
                                  onError={(e) => e.target.src="https://images.seeklogo.com/logo-png/26/2/szybka-terapia-onkologiczna-logo-png_seeklogo-268047.png"} />
-                            <h1 className="text-2xl font-bold text-center text-gray-800 mb-8">Logowanie</h1>
+                            <h1 className="text-2xl font-bold text-center text-gray-800 mb-8 tracking-tight">Logowanie</h1>
                             <div className="space-y-4">
-                                <select onChange={(e) => setSelectedCoordinator(e.target.value)} 
-                                        className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-600 outline-none transition-all">
+                                <select 
+                                    onChange={(e) => setSelectedLogin(e.target.value)} 
+                                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-600 outline-none bg-gray-50"
+                                >
                                     <option value="">Wybierz koordynatora</option>
-                                    {['GiermanowskaO', 'IwaneczkoK', 'JablonskaE', 'KoperaN', 'MetlerskaA', 'SzatonP'].map(c => <option key={c} value={c}>{c}</option>)}
+                                    {Object.entries(coordinatorsMap).map(([login, name]) => (
+                                        <option key={login} value={login}>{name}</option>
+                                    ))}
                                 </select>
-                                <input type="password" placeholder="Hasło" 
-                                       onKeyPress={handleKeyPress}
-                                       onChange={(e) => setPassword(e.target.value)} 
-                                       className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-600 outline-none transition-all" />
-                                <button onClick={handleLogin} 
-                                        className="w-full bg-teal-700 text-white py-3 rounded-lg hover:bg-teal-800 transition-shadow font-bold shadow-lg">
+                                <input 
+                                    type="password" 
+                                    placeholder="Hasło" 
+                                    onKeyPress={handleKeyPress}
+                                    onChange={(e) => setPassword(e.target.value)} 
+                                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-600 outline-none bg-gray-50" 
+                                />
+                                <button 
+                                    onClick={handleLogin} 
+                                    className="w-full bg-teal-700 text-white py-3 rounded-lg hover:bg-teal-800 transition-all font-bold shadow-lg active:scale-95"
+                                >
                                     Zaloguj się
                                 </button>
                             </div>
@@ -102,73 +126,92 @@
 
             return (
                 <div className="min-h-screen bg-gray-50 flex">
-                    {/* Panel Boczny */}
-                    <div className="w-64 bg-white shadow-xl flex flex-col z-10 border-r border-gray-100">
-                        <div className="p-6 border-b">
-                            <img src="./assets/DiLO.png" className="h-12 mx-auto mb-4" />
-                            <div className="text-center">
-                                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Koordynator</p>
-                                <p className="font-bold text-teal-800">{currentUser}</p>
-                            </div>
+                    <div className="w-72 bg-white shadow-xl flex flex-col z-10 border-r border-gray-100">
+                        <div className="p-8 border-b text-center">
+                            <img src="./assets/DiLO.png" className="h-12 mx-auto mb-4" onError={(e) => e.target.style.display='none'}/>
+                            <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Koordynator STO</p>
+                            <p className="font-extrabold text-teal-900 leading-tight">{currentUser.fullName}</p>
                         </div>
                         <nav className="flex-1 p-4 space-y-2">
-                            <div className="flex items-center gap-3 p-3 bg-teal-50 text-teal-700 rounded-lg font-medium">
+                            <div className="flex items-center gap-3 p-3 bg-teal-700 text-white rounded-xl shadow-md">
                                 <i data-lucide="calendar" className="w-5 h-5"></i>
-                                <span>Dashboard</span>
+                                <span className="font-medium">Dashboard</span>
                             </div>
-                            <div className="pt-4 px-3">
-                                <div className="flex items-center gap-2 text-green-600 text-sm font-semibold">
-                                    <span className="relative flex h-2 w-2">
-                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                                    </span>
-                                    Połączono z Google Drive
+                            
+                            {isDataLoaded && (
+                                <div className="mt-6 px-3 py-3 bg-green-50 rounded-xl border border-green-100">
+                                    <div className="flex items-center gap-2 text-green-700 text-[10px] font-black tracking-tighter uppercase">
+                                        <span className="relative flex h-2 w-2">
+                                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                        </span>
+                                        Połączono z Google Drive
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </nav>
                         <div className="p-4 border-t">
-                            <button onClick={() => setIsLoggedIn(false)} className="w-full py-2 text-red-500 hover:bg-red-50 rounded transition-colors flex items-center justify-center gap-2 text-sm">
+                            <button onClick={() => {setIsLoggedIn(false); setIsDataLoaded(false);}} 
+                                    className="w-full py-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all flex items-center justify-center gap-2 text-xs font-black uppercase">
                                 <i data-lucide="x-circle" className="w-4 h-4"></i> Wyloguj się
                             </button>
                         </div>
                     </div>
 
-                    {/* Treść główna */}
-                    <div className="flex-1 p-8 overflow-auto">
-                        <header className="flex justify-between items-center mb-10 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div className="flex-1 p-10 overflow-auto">
+                        <header className="flex justify-between items-center mb-10 bg-white p-8 rounded-[32px] shadow-sm border border-gray-100">
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-800">Witaj ponownie!</h1>
-                                <p className="text-gray-500 text-sm">Synchronizacja z chmurą: Arkusz_Pacjenci_2026.xlsx</p>
+                                <h1 className="text-3xl font-black text-gray-800 tracking-tight">Witaj, {currentUser.fullName.split(' ')[0]}!</h1>
+                                {isDataLoaded ? (
+                                    <p className="text-green-600 text-sm font-semibold flex items-center gap-1.5 mt-1">
+                                        <i data-lucide="check-circle" className="w-4 h-4"></i> Aktywna sesja: STO_Cloud_2026
+                                    </p>
+                                ) : (
+                                    <p className="text-orange-500 text-sm font-medium mt-1 animate-pulse">Trwa weryfikacja zasobów...</p>
+                                )}
                             </div>
-                            <div className="text-right">
-                                <p className="text-lg font-bold text-teal-700">{currentTime.toLocaleTimeString('pl-PL')}</p>
-                                <p className="text-sm text-gray-500">{currentTime.toLocaleDateString('pl-PL', {weekday: 'long', day: 'numeric', month: 'long'})}</p>
+                            <div className="bg-gray-50 px-6 py-3 rounded-2xl border border-gray-100 text-right">
+                                <p className="text-2xl font-black text-teal-800 leading-none tabular-nums">{currentTime.toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'})}</p>
+                                <p className="text-[10px] font-black text-gray-400 uppercase mt-1 tracking-widest">
+                                    {currentTime.toLocaleDateString('pl-PL', {day: 'numeric', month: 'long'})}
+                                </p>
                             </div>
                         </header>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                                <h3 className="text-gray-400 text-sm font-bold uppercase mb-4 flex items-center gap-2">
-                                    <i data-lucide="phone" className="w-4 h-4"></i> Do obdzwonienia
-                                </h3>
-                                <p className="text-3xl font-bold text-gray-800">0</p>
-                                <p className="text-xs text-green-500 mt-2 font-medium">✓ Wszystkie zadania wykonane</p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                                <div className="w-12 h-12 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center mb-6">
+                                    <i data-lucide="phone" className="w-6 h-6"></i>
+                                </div>
+                                <h3 className="text-gray-400 text-xs font-black uppercase tracking-widest">Telefony</h3>
+                                <p className="text-5xl font-black text-gray-800 mt-2">0</p>
+                                <div className="mt-4 flex items-center gap-1.5 text-green-500 text-[10px] font-bold uppercase">
+                                    <i data-lucide="check-circle" className="w-3 h-3"></i> Wszystko wykonane
+                                </div>
                             </div>
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                                <h3 className="text-gray-400 text-sm font-bold uppercase mb-4 flex items-center gap-2">
-                                    <i data-lucide="users" className="w-4 h-4"></i> Aktywni pacjenci
-                                </h3>
-                                <p className="text-3xl font-bold text-gray-800">12</p>
-                                <p className="text-xs text-gray-400 mt-2 italic font-medium underline">Pokaż listę z arkusza</p>
+                            
+                            <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                                <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
+                                    <i data-lucide="users" className="w-6 h-6"></i>
+                                </div>
+                                <h3 className="text-gray-400 text-xs font-black uppercase tracking-widest">Karty DiLO</h3>
+                                <p className="text-5xl font-black text-gray-800 mt-2">{isDataLoaded ? '12' : '--'}</p>
+                                <p className="text-[10px] text-gray-400 mt-4 italic font-bold">Synchronizacja z Arkuszem</p>
                             </div>
                         </div>
 
-                        <div className="mt-10 bg-teal-900 rounded-3xl p-10 text-white relative overflow-hidden shadow-2xl">
-                            <div className="relative z-10">
-                                <h2 className="text-3xl font-bold mb-4 italic text-teal-100">"W onkologii liczy się czas."</h2>
-                                <p className="text-teal-200 opacity-80">System koordynacji STO zapewnia płynny przepływ informacji między lekarzem a pacjentem.</p>
+                        <div className="mt-12 bg-teal-950 rounded-[48px] p-16 text-white relative shadow-2xl overflow-hidden min-h-[350px] flex items-center">
+                            <div className="relative z-10 max-w-2xl">
+                                <h2 className="text-5xl font-black mb-8 leading-[1.1] italic">
+                                    "W onkologii liczy się <br/><span className="text-teal-400">każda sekunda."</span>
+                                </h2>
+                                <p className="text-teal-100/60 font-medium text-xl leading-relaxed">
+                                    Zintegrowany system wsparcia Szybkiej Terapii Onkologicznej. <br/>Zoptymalizowano dla: {currentUser.fullName}.
+                                </p>
                             </div>
-                            <i data-lucide="trending-up" className="absolute right-[-20px] bottom-[-20px] w-64 h-64 text-white opacity-5"></i>
+                            <div className="absolute right-[-5%] bottom-[-10%] opacity-10">
+                                <i data-lucide="trending-up" className="w-[500px] h-[500px]"></i>
+                            </div>
                         </div>
                     </div>
                 </div>

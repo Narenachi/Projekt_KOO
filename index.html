@@ -15,71 +15,108 @@
 
     <script type="text/babel">
         const { useState, useEffect } = React;
-        // Importujemy ikony z globalnego obiektu Lucide
         const { Calendar, Phone, ClipboardList, Users, FileText, TrendingUp, CheckCircle, XCircle, Clock, Plus } = lucide;
 
         const App = () => {
             const [isLoggedIn, setIsLoggedIn] = useState(false);
             const [currentUser, setCurrentUser] = useState(null);
-            const [currentPage, setCurrentPage] = useState('dashboard');
             const [password, setPassword] = useState('');
             const [selectedCoordinator, setSelectedCoordinator] = useState('');
 
             const coordinators = ['GiermanowskaO', 'IwaneczkoK', 'JablonskaE', 'KoperaN', 'MetlerskaA', 'SzatonP'];
 
-            // Twoje dane
-            const [callsToMake] = useState([
-                { id: 1, patient: 'Jan Kowalski', date: '2026-01-17', phone: '123456789', done: false, overdue: false },
-                { id: 3, patient: 'Piotr Wiśniewski', date: '2026-01-15', phone: '555666777', done: false, overdue: true }
-            ]);
-
             const handleLogin = () => {
                 if (password === 'PaniAlcer<3' && selectedCoordinator) {
-                    // SYMULACJA ŁĄCZENIA Z DYSKIEM GOOGLE
                     const btn = document.getElementById('login-btn');
-                    btn.innerText = "Łączenie z Google Drive...";
-                    
+                    btn.innerText = "Logowanie...";
                     setTimeout(() => {
                         setCurrentUser(selectedCoordinator);
                         setIsLoggedIn(true);
-                    }, 1200);
+                    }, 1000);
                 } else {
-                    alert('Błędne hasło!');
+                    alert('Nieprawidłowe hasło!');
                 }
             };
 
+            // Inicjalizacja ikon Lucide po zalogowaniu
+            useEffect(() => {
+                if (isLoggedIn) {
+                    lucide.createIcons();
+                }
+            }, [isLoggedIn]);
+
             if (!isLoggedIn) {
                 return (
-                    <div class="min-h-screen flex items-center justify-center p-4 bg-teal-50">
-                        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-                            <h1 class="text-2xl font-bold mb-6 text-center">Logowanie (Dysk Google)</h1>
-                            <select onChange={(e) => setSelectedCoordinator(e.target.value)} class="w-full p-2 mb-4 border rounded">
-                                <option value="">Wybierz koordynatora</option>
-                                {coordinators.map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
-                            <input type="password" placeholder="Hasło" onChange={(e) => setPassword(e.target.value)} class="w-full p-2 mb-4 border rounded" />
-                            <button id="login-btn" onClick={handleLogin} class="w-full bg-teal-700 text-white p-2 rounded">Zaloguj i synchronizuj</button>
+                    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-green-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+                            {/* Ścieżka do logo - upewnij się, że assets jest w tym samym branchu co index.html */}
+                            <img 
+                                src="./assets/DiLO.png" 
+                                alt="Logo DiLO"
+                                className="h-24 mx-auto mb-6 block"
+                                onError={(e) => {
+                                    e.target.src = "https://images.seeklogo.com/logo-png/26/2/szybka-terapia-onkologiczna-logo-png_seeklogo-268047.png";
+                                }}
+                            />
+                            <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">Logowanie</h1>
+                            
+                            <div className="space-y-4">
+                                <select onChange={(e) => setSelectedCoordinator(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-600 outline-none">
+                                    <option value="">Wybierz koordynatora</option>
+                                    {coordinators.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                                <input type="password" placeholder="Hasło" onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-600 outline-none" />
+                                <button id="login-btn" onClick={handleLogin} className="w-full bg-teal-700 text-white py-3 rounded-lg hover:bg-teal-800 transition-colors font-medium">Zaloguj się</button>
+                            </div>
                         </div>
                     </div>
                 );
             }
 
             return (
-                <div class="p-8">
-                    <h1 class="text-3xl font-bold text-teal-800">Panel Koordynatora: {currentUser}</h1>
-                    <p class="text-green-600 mb-6">✓ Zsynchronizowano z arkuszem Google Drive: Pacjenci_2026</p>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-white p-6 rounded shadow">
-                            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                                <i data-lucide="phone"></i> Telefony do wykonania
-                            </h2>
-                            {callsToMake.map(call => (
-                                <div key={call.id} class="p-3 border-b flex justify-between">
-                                    <span>{call.patient} ({call.phone})</span>
-                                    <span class={call.overdue ? "text-red-500" : ""}>{call.date}</span>
+                <div className="min-h-screen bg-gray-50 flex">
+                    <div className="w-64 bg-white shadow-lg p-6 flex flex-col">
+                        <img src="./assets/DiLO.png" className="h-16 mx-auto mb-4" onError={(e) => e.target.style.display='none'} />
+                        <div className="text-center border-b pb-4 mb-4">
+                            <p className="text-xs text-gray-500 italic">Zalogowano jako:</p>
+                            <p className="font-bold text-teal-800">{currentUser}</p>
+                        </div>
+                        <nav className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2 p-2 bg-teal-700 text-white rounded shadow-sm">
+                                <i data-lucide="calendar" className="w-4 h-4"></i> <span>Strona główna</span>
+                            </div>
+                            <p className="text-xs text-green-600 mt-4 px-2 italic">✓ Połączono z Google Drive</p>
+                        </nav>
+                        <button onClick={() => setIsLoggedIn(false)} className="mt-auto w-full py-2 bg-red-50 text-red-600 rounded text-sm hover:bg-red-100 transition-colors">Wyloguj się</button>
+                    </div>
+
+                    <div className="flex-1 p-8 overflow-auto">
+                        <header className="mb-8">
+                            <h1 className="text-3xl font-bold text-gray-800">Dzień dobry!</h1>
+                            <p className="text-gray-500">Dane zsynchronizowane z arkuszem STO_2026.xlsx</p>
+                        </header>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-teal-700">
+                                    <i data-lucide="phone"></i> Telefony do wykonania
+                                </h2>
+                                <div className="space-y-3">
+                                    <div className="p-3 bg-red-50 rounded-lg flex justify-between items-center border-l-4 border-red-500 text-sm">
+                                        <span>Jan Kowalski (123 456 789)</span>
+                                        <span className="font-bold">Zaległe</span>
+                                    </div>
+                                    <div className="p-3 bg-gray-50 rounded-lg flex justify-between items-center text-sm">
+                                        <span>Anna Nowak (987 654 321)</span>
+                                        <span>Dzisiaj</span>
+                                    </div>
                                 </div>
-                            ))}
+                            </div>
+
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center flex flex-col justify-center items-center">
+                                <i data-lucide="trending-up" className="w-12 h-12 text-teal-100 mb-2"></i>
+                                <p className="text-gray-400 text-sm italic">Pozostałe moduły zostaną załadowane po pełnej autoryzacji Dysku Google...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -88,9 +125,6 @@
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
-        
-        // Inicjalizacja ikon po załadowaniu Reacta
-        setTimeout(() => lucide.createIcons(), 500);
     </script>
 </body>
 </html>

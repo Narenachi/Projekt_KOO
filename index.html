@@ -10,13 +10,26 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,900;1,900&family=Inter:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=Inter:wght@400;700;900&display=swap');
+        
         body { font-family: 'Inter', sans-serif; background-color: #f8faf9; }
-        .font-title { font-family: 'Playfair Display', serif; }
+        
+        /* Czcionka Charm dla paneli i tytułów */
+        .font-charm { font-family: 'Charm', cursive; }
+        
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #006B61; border-radius: 10px; }
+        
+        /* Styl paneli jak w logowaniu */
+        .panel-style {
+            background: white;
+            border-radius: 50px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+            border-bottom: 12px solid #006B61;
+        }
     </style>
 </head>
 <body>
@@ -29,7 +42,7 @@
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwc9p_yD-oH3pD7rjDuQZYh7pChebVnbtp79fjYyl1KcwbHMn8JEG7RRnSZoDMF7OleXA/exec";
 
         // --- KOMPONENT: PROGRAMY I FUNDACJE ---
-        const FundsPage = ({ funds, loading, setShowModal }) => {
+        const FundsPage = ({ funds, loading, setShowModal, refreshData }) => {
             const [search, setSearch] = useState('');
             useEffect(() => { lucide.createIcons(); }, [funds, loading]);
 
@@ -47,30 +60,38 @@
                                 <i data-lucide="search" className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 w-5 h-5"></i>
                                 <input 
                                     type="text" 
-                                    placeholder="Szukaj (nazwa, wsparcie, nowotwór, etap leczenia, zasięg)..." 
+                                    placeholder="Szukaj fundacji..." 
                                     className="w-full bg-gray-50 p-5 pl-14 rounded-[25px] outline-none focus:ring-2 focus:ring-[#006B61] font-bold text-gray-600 border-none shadow-inner"
                                     onChange={(e) => setSearch(e.target.value)}
                                 />
                             </div>
                         </div>
-                        <button onClick={() => setShowModal(true)} className="bg-[#006B61] text-white px-8 py-5 rounded-[25px] font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-105 transition-all">
-                            Dodaj program/fundację
-                        </button>
+                        <div className="flex gap-2">
+                            <button onClick={refreshData} className="bg-gray-100 text-gray-600 p-5 rounded-[25px] hover:bg-gray-200 transition-all" title="Debuguj połączenie">
+                                <i data-lucide="refresh-cw" className="w-5 h-5"></i>
+                            </button>
+                            <button onClick={() => setShowModal(true)} className="bg-[#006B61] text-white px-8 py-5 rounded-[25px] font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-105 transition-all">
+                                Dodaj fundację
+                            </button>
+                        </div>
                     </div>
 
                     {loading ? (
-                        <div className="flex flex-col items-center justify-center h-64">
+                        <div className="flex flex-col items-center justify-center h-64 font-charm text-2xl text-[#006B61]">
                             <div className="w-12 h-12 border-4 border-[#006B61] border-t-transparent rounded-full animate-spin mb-4"></div>
-                            <p className="text-[#006B61] font-black text-[10px] uppercase tracking-widest">Pobieranie danych z bazy...</p>
+                            Ładowanie danych...
                         </div>
                     ) : (
                         <div className="space-y-4">
                             {filtered.length === 0 ? (
-                                <p className="text-center py-20 text-gray-300 font-black uppercase tracking-widest italic text-2xl">Brak danych w arkuszu</p>
+                                <div className="bg-white p-20 rounded-[40px] text-center border-2 border-dashed border-gray-100">
+                                    <p className="font-charm text-3xl text-gray-300 mb-4">Brak danych do wyświetlenia</p>
+                                    <p className="text-xs text-gray-400 uppercase font-black tracking-widest">Upewnij się, że arkusz Google zawiera dane i skrypt jest poprawnie wdrożony.</p>
+                                </div>
                             ) : filtered.map((fund, idx) => (
                                 <div key={idx} className="bg-white rounded-[40px] border border-gray-100 p-8 grid grid-cols-1 md:grid-cols-3 gap-8 hover:shadow-md transition-all">
                                     <div className="md:col-span-2">
-                                        <span className="text-[9px] font-black bg-[#C9D9B6] text-[#006B61] px-3 py-1 rounded-full uppercase mb-2 inline-block font-bold">{fund.type || 'Inne'}</span>
+                                        <span className="text-[9px] font-black bg-[#C9D9B6] text-[#006B61] px-3 py-1 rounded-full uppercase mb-2 inline-block font-bold">{fund.type || 'Program'}</span>
                                         <h3 className="text-2xl font-black text-gray-800 mb-4 tracking-tight">{fund.name}</h3>
                                         <div className="grid grid-cols-2 gap-4 text-sm leading-relaxed">
                                             <p><strong className="text-[#006B61] uppercase text-[9px] tracking-widest block mb-1">Wsparcie:</strong> {fund.support || '-'}</p>
@@ -81,7 +102,7 @@
                                         <p className="font-black text-[#006B61] uppercase text-[10px] italic border-b pb-2 mb-2">Kontakt:</p>
                                         <p className="flex items-center gap-3 font-bold"><i data-lucide="phone" className="w-4 h-4 text-[#408670]"></i> {fund.phone || '-'}</p>
                                         <p className="flex items-center gap-3 font-bold truncate"><i data-lucide="mail" className="w-4 h-4 text-[#408670]"></i> {fund.email || '-'}</p>
-                                        <a href={fund.web} target="_blank" className="block text-center bg-[#006B61] text-white p-4 rounded-2xl font-black uppercase text-[9px] mt-2 shadow-lg">Otwórz WWW</a>
+                                        <a href={fund.web} target="_blank" className="block text-center bg-[#006B61] text-white p-4 rounded-2xl font-black uppercase text-[9px] mt-2">WWW</a>
                                     </div>
                                 </div>
                             ))}
@@ -105,7 +126,7 @@
                 <div className="space-y-10 animate-fadeIn text-sm font-medium text-gray-600">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <section className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
-                            <h2 className="flex items-center gap-2 font-black text-[#006B61] mb-8 uppercase text-[10px] tracking-widest"><i data-lucide="phone" className="w-4 h-4"></i> Połączenia (najbliższe 7 dni)</h2>
+                            <h2 className="flex items-center gap-2 font-charm text-2xl text-[#006B61] mb-6"><i data-lucide="phone" className="w-5 h-5"></i> Połączenia</h2>
                             <div className="grid grid-cols-7 gap-2 text-center">
                                 {days.map(day => (
                                     <div key={day} className="border-r last:border-none px-1">
@@ -116,7 +137,7 @@
                             </div>
                         </section>
                         <section className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
-                            <h2 className="flex items-center gap-2 font-black text-[#006B61] mb-8 uppercase text-[10px] tracking-widest"><i data-lucide="calendar" className="w-4 h-4"></i> Wizyty (najbliższe 7 dni)</h2>
+                            <h2 className="flex items-center gap-2 font-charm text-2xl text-[#006B61] mb-6"><i data-lucide="calendar" className="w-5 h-5"></i> Wizyty</h2>
                             <div className="grid grid-cols-7 gap-2 text-center">
                                 {days.map(day => (
                                     <div key={day} className="border-r last:border-none px-1">
@@ -129,7 +150,7 @@
                     </div>
 
                     <section className="bg-[#006B61] p-10 rounded-[50px] text-white shadow-2xl">
-                        <h2 className="flex items-center gap-2 font-black mb-8 uppercase text-[10px] tracking-widest text-[#C9D9B6]"><i data-lucide="clipboard-list" className="w-5 h-5"></i> Zadania do wykonania</h2>
+                        <h2 className="flex items-center gap-2 font-charm text-3xl mb-8 text-[#C9D9B6]"><i data-lucide="clipboard-list" className="w-6 h-6"></i> Zadania do wykonania</h2>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 bg-white/10 p-6 rounded-3xl border border-white/10">
                             <div className="space-y-2">
                                 <label className="text-[9px] uppercase font-bold text-teal-200 ml-1">Koordynator</label>
@@ -144,7 +165,7 @@
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[9px] uppercase font-bold text-teal-200 ml-1">Treść zadania</label>
-                                <input type="text" placeholder="Co trzeba zrobić?" value={tText} onChange={e=>setTText(e.target.value)} className="w-full bg-transparent border-b border-[#9DBD9A] p-2 outline-none text-sm placeholder:text-white/30" />
+                                <input type="text" placeholder="Wpisz zadanie..." value={tText} onChange={e=>setTText(e.target.value)} className="w-full bg-transparent border-b border-[#9DBD9A] p-2 outline-none text-sm placeholder:text-white/30" />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[9px] uppercase font-bold text-teal-200 ml-1">Kogo dotyczy</label>
@@ -157,9 +178,9 @@
                                 </div>
                             </div>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-3 font-medium text-xs">
                             {tasks.map(t => (
-                                <div key={t.id} className="bg-white/5 border border-white/10 p-6 rounded-3xl flex justify-between items-center group transition-all">
+                                <div key={t.id} className="bg-white/5 border border-white/10 p-6 rounded-3xl flex justify-between items-center transition-all">
                                     <div>
                                         <p className="text-[10px] font-black text-teal-200 uppercase mb-1 tracking-widest">{t.date} | {t.coord}</p>
                                         <p className="font-bold text-lg leading-tight">{t.text}</p>
@@ -189,22 +210,28 @@
             useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
             useEffect(() => { lucide.createIcons(); }, [isLoggedIn, page, tasks, showFundModal]);
 
-            useEffect(() => {
-                if (isLoggedIn) {
-                    fetch(SCRIPT_URL).then(res => res.json()).then(data => {
+            const fetchData = () => {
+                setLoadingFunds(true);
+                fetch(SCRIPT_URL)
+                    .then(res => res.json())
+                    .then(data => {
                         setFunds(data);
                         setLoadingFunds(false);
-                    }).catch(err => {
-                        console.error(err);
+                    })
+                    .catch(err => {
+                        console.error("Błąd podczas debugowania:", err);
                         setLoadingFunds(false);
                     });
-                }
+            };
+
+            useEffect(() => {
+                if (isLoggedIn) fetchData();
             }, [isLoggedIn]);
 
             if (!isLoggedIn) {
                 return (
                     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-                        <form onSubmit={(e) => { e.preventDefault(); const l = document.getElementById('ls').value; if(l && document.getElementById('ps').value === 'PaniAlcer<3') { setUser(coordsMap[l]); setIsLoggedIn(true); } else { alert('Logowanie odrzucone!'); } }} className="bg-white p-12 rounded-[50px] shadow-2xl w-full max-w-sm text-center border-b-[12px] border-[#006B61]">
+                        <form onSubmit={(e) => { e.preventDefault(); const l = document.getElementById('ls').value; if(l && document.getElementById('ps').value === 'PaniAlcer<3') { setUser(coordsMap[l]); setIsLoggedIn(true); } else { alert('Błąd logowania!'); } }} className="panel-style p-12 w-full max-w-sm text-center">
                             <img src="./assets/DiLO.png" className="h-24 mx-auto mb-10" />
                             <select id="ls" className="w-full p-4 border-2 border-gray-100 rounded-2xl mb-4 font-bold outline-none bg-gray-50 focus:border-[#006B61]">
                                 <option value="">Wybierz login (ID)</option>
@@ -219,37 +246,38 @@
 
             return (
                 <div className="min-h-screen flex">
-                    {/* MENU BOCZNE */}
-                    <aside className="w-80 bg-white shadow-xl flex flex-col border-r border-gray-50 shrink-0">
-                        <div className="p-12 border-b text-center bg-gray-50/20">
-                            <img src="./assets/DiLO.png" className="h-24 mx-auto mb-6 scale-125 transition-transform" />
-                            <div className="mt-8">
-                                <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mb-2 italic">Zalogowano jako:</p>
-                                <p className="font-black text-[#006B61] leading-tight text-lg tracking-tight px-4">{user}</p>
+                    {/* MENU BOCZNE DOPASOWANE STYLISTYCZNIE */}
+                    <aside className="w-80 p-6 flex flex-col shrink-0">
+                        <div className="panel-style h-full flex flex-col">
+                            <div className="p-10 border-b text-center">
+                                <img src="./assets/DiLO.png" className="h-24 mx-auto mb-6 scale-110" />
+                                <div className="mt-8 font-charm">
+                                    <p className="text-sm text-gray-400 mb-1">Zalogowano jako:</p>
+                                    <p className="text-2xl text-[#006B61] leading-tight px-4">{user}</p>
+                                </div>
+                            </div>
+                            <nav className="flex-1 p-8 space-y-4 font-black text-[10px] uppercase tracking-widest text-gray-400">
+                                {[ {id:'home',l:'Strona główna',i:'trending-up'}, {id:'patients',l:'Baza pacjentów',i:'users'}, {id:'schedules',l:'Harmonogramy',i:'calendar'}, {id:'docs',l:'Dokumenty',i:'file-text'}, {id:'funds',l:'Programy i fundacje',i:'heart'} ].map(i => (
+                                    <div key={i.id} onClick={() => setPage(i.id)} className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all ${page === i.id ? 'bg-[#006B61] text-white shadow-lg shadow-teal-900/10' : 'hover:bg-[#C9D9B6]/10 hover:text-[#006B61]'}`}><i data-lucide={i.i} className="w-4 h-4"></i> {i.l}</div>
+                                ))}
+                            </nav>
+                            <div className="p-8 border-t">
+                                <button onClick={()=>setIsLoggedIn(false)} className="w-full p-4 text-red-400 font-black text-[9px] uppercase border-2 border-red-50 rounded-2xl hover:bg-red-50 transition-all font-bold">Wyloguj się</button>
                             </div>
                         </div>
-                        <nav className="flex-1 p-8 space-y-4 font-black text-[10px] uppercase tracking-widest text-gray-400">
-                            {[ {id:'home',l:'Strona główna',i:'trending-up'}, {id:'patients',l:'Baza pacjentów',i:'users'}, {id:'schedules',l:'Harmonogramy',i:'calendar'}, {id:'docs',l:'Dokumenty',i:'file-text'}, {id:'funds',l:'Programy i fundacje',i:'heart'} ].map(i => (
-                                <div key={i.id} onClick={() => setPage(i.id)} className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all ${page === i.id ? 'bg-[#006B61] text-white shadow-lg' : 'hover:bg-[#C9D9B6]/10 hover:text-[#006B61]'}`}><i data-lucide={i.i} className="w-4 h-4"></i> {i.l}</div>
-                            ))}
-                        </nav>
-                        <button onClick={()=>setIsLoggedIn(false)} className="m-8 p-4 text-red-400 font-black text-[9px] uppercase border-2 border-red-50 rounded-2xl hover:bg-red-50 transition-all font-bold">Wyloguj się</button>
                     </aside>
 
-                    {/* TREŚĆ GŁÓWNA */}
                     <main className="flex-1 p-12 overflow-auto relative min-w-0">
                         <header className="flex justify-between items-start mb-12">
-                            <h1 className="text-6xl font-title italic text-gray-800 tracking-tighter uppercase leading-none mt-2 shrink-0">
+                            <h1 className="text-6xl font-charm text-gray-800 leading-none mt-2 shrink-0 flex items-center gap-4">
                                 {page === 'home' ? 'Strona główna' : page === 'patients' ? 'Baza pacjentów' : page === 'funds' ? 'Programy i fundacje' : page === 'schedules' ? 'Harmonogramy' : 'Dokumentacja'}
+                                <i data-lucide="heart" className="w-10 h-10 fill-[#006B61] text-[#006B61]"></i>
                             </h1>
-                            <div className="text-right bg-white p-8 rounded-[40px] shadow-sm border border-b-8 border-[#006B61] min-w-[280px]">
-                                <p className="text-xl font-black text-[#006B61] uppercase tracking-[0.1em] leading-tight mb-2">
-                                    {now.toLocaleDateString('pl-PL', {weekday: 'long'}).charAt(0).toUpperCase() + now.toLocaleDateString('pl-PL', {weekday: 'long'}).slice(1)}
+                            <div className="text-right panel-style p-8 min-w-[280px]">
+                                <p className="text-3xl font-charm text-[#006B61] leading-tight">
+                                    {now.toLocaleDateString('pl-PL', {weekday: 'long'})}, {now.toLocaleDateString('pl-PL')}
                                 </p>
-                                <p className="text-2xl font-black text-gray-400 uppercase tracking-tighter tabular-nums mb-1">
-                                    {now.toLocaleDateString('pl-PL', {day:'2-digit', month:'2-digit', year:'numeric'})}
-                                </p>
-                                <p className="text-4xl font-black text-[#006B61] tabular-nums tracking-tighter">
+                                <p className="text-4xl font-black text-gray-400 tabular-nums tracking-tighter mt-1">
                                     {now.toLocaleTimeString('pl-PL')}
                                 </p>
                             </div>
@@ -257,27 +285,24 @@
 
                         <div className="animate-fadeIn">
                             {page === 'home' && <HomePage user={user} tasks={tasks} onAddTask={(t,d,p,c)=>setTasks([...tasks,{id:Date.now(),text:t,date:d,patient:p,coord:c}])} onDeleteTask={id=>setTasks(tasks.filter(tk=>tk.id!==id))} />}
-                            {page === 'funds' && <FundsPage funds={funds} loading={loadingFunds} setShowModal={setShowFundModal} />}
+                            {page === 'funds' && <FundsPage funds={funds} loading={loadingFunds} setShowModal={setShowFundModal} refreshData={fetchData} />}
                             {page === 'patients' && (
                                 <div className="bg-white p-12 rounded-[50px] shadow-sm border border-gray-100 min-h-[500px]">
-                                    <div className="flex justify-between items-center mb-10"><h2 className="text-3xl font-black text-[#006B61] uppercase tracking-tighter">Lista pacjentów</h2><button className="bg-[#006B61] text-white px-8 py-4 rounded-[25px] font-black text-[10px] uppercase shadow-xl hover:scale-105 transition-all">Dodaj nowego pacjenta</button></div>
-                                    <div className="relative mb-10"><i data-lucide="search" className="absolute left-6 top-5 w-5 h-5 text-gray-300"></i><input type="text" placeholder="Szukaj pacjenta..." className="w-full bg-gray-50 p-5 pl-14 rounded-[25px] outline-none font-bold text-gray-600 shadow-inner" /></div>
-                                    <p className="text-center text-gray-200 italic py-24 font-black tracking-widest opacity-20 text-6xl uppercase leading-none">Baza gotowa do<br/>podpięcia danych</p>
+                                    <div className="flex justify-between items-center mb-10"><h2 className="font-charm text-4xl text-[#006B61]">Ewidencja pacjentów</h2><button className="bg-[#006B61] text-white px-8 py-4 rounded-[25px] font-black text-[10px] uppercase shadow-xl hover:scale-105 transition-all">Dodaj nowego pacjenta</button></div>
+                                    <div className="relative mb-10"><i data-lucide="search" className="absolute left-6 top-5 w-5 h-5 text-gray-300"></i><input type="text" placeholder="Szukaj pacjenta..." className="w-full bg-gray-50 p-5 pl-14 rounded-[25px] outline-none font-bold text-gray-600 shadow-inner border-none" /></div>
+                                    <p className="text-center text-gray-200 italic py-24 font-black tracking-widest opacity-20 text-6xl uppercase leading-none">Baza gotowa do podpięcia</p>
                                 </div>
                             )}
                             {page === 'schedules' && (
                                 <div className="bg-white p-12 rounded-[50px] shadow-sm border border-gray-100 text-center py-32">
-                                    <h2 className="text-4xl font-title italic text-gray-300 uppercase tracking-[0.2em] mb-4">Grafiki i Terminy</h2>
+                                    <h2 className="text-4xl font-charm text-gray-300 uppercase tracking-[0.2em] mb-4 italic underline decoration-[#C9D9B6]">Grafiki i Terminy</h2>
                                     <p className="text-gray-200 font-black uppercase tracking-[0.5em] text-2xl">Moduł w synchronizacji</p>
                                 </div>
                             )}
                             {page === 'docs' && (
                                 <div className="bg-white p-12 rounded-[50px] shadow-sm border text-center py-20">
-                                    <h2 className="text-4xl font-title italic text-[#006B61] mb-10 underline decoration-[#C9D9B6]">Generator Dokumentacji</h2>
-                                    <div className="max-w-md mx-auto space-y-4">
-                                        <select className="w-full p-4 bg-gray-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-[#006B61]"><option>Wniosek o Konsylium DiLO</option><option>Raport Miesięczny Koordynatora</option></select>
-                                        <button className="w-full bg-[#006B61] text-white p-6 rounded-[25px] font-black uppercase text-xs shadow-xl transition-all hover:bg-[#408670]">Generuj dokument</button>
-                                    </div>
+                                    <h2 className="text-4xl font-charm text-[#006B61] mb-10 underline decoration-[#C9D9B6]">Dokumentacja</h2>
+                                    <p className="text-gray-300 font-black uppercase tracking-widest text-sm italic">Brak dokumentów do wyświetlenia. Moduł generatora zostanie aktywowany po wgraniu wzorów dokumentów.</p>
                                 </div>
                             )}
                         </div>
@@ -285,33 +310,28 @@
                         {/* MODAL PROGRAMY/FUNDACJE */}
                         {showFundModal && (
                             <div className="fixed inset-0 bg-[#006B61]/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-                                <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[50px] shadow-2xl overflow-hidden flex flex-col animate-fadeIn">
+                                <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[50px] shadow-2xl overflow-hidden flex flex-col animate-fadeIn border-b-8 border-[#006B61]">
                                     <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                                        <h3 className="text-3xl font-title italic text-[#006B61]">Nowy wpis do bazy danych</h3>
+                                        <h3 className="text-3xl font-charm text-[#006B61]">Nowy program / fundacja</h3>
                                         <button onClick={() => setShowFundModal(false)} className="text-gray-400 hover:text-red-500 transition-colors"><i data-lucide="x-circle" className="w-8 h-8"></i></button>
                                     </div>
                                     <div className="p-10 overflow-y-auto custom-scrollbar grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="space-y-4 text-sm">
-                                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Dane podstawowe</h4>
-                                            <input type="text" placeholder="NAZWA PROGRAMU/FUNDACJI" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold" />
-                                            <input type="text" placeholder="TYP" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold" />
-                                            <input type="text" placeholder="TYP NOWOTWORU" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold" />
-                                            <input type="text" placeholder="WIEK PACJENTA" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold" />
+                                        <div className="space-y-4 text-sm font-bold">
+                                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 italic">Dane podstawowe</h4>
+                                            <input type="text" placeholder="NAZWA PROGRAMU/FUNDACJI" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61]" />
+                                            <input type="text" placeholder="TYP" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61]" />
+                                            <input type="text" placeholder="TYP NOWOTWORU" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61]" />
+                                            <input type="text" placeholder="WIEK PACJENTA" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61]" />
                                         </div>
-                                        <div className="space-y-4 text-sm">
-                                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Szczegóły wsparcia</h4>
-                                            <textarea placeholder="RODZAJ WSPARCIA" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold h-20"></textarea>
-                                            <textarea placeholder="WSPARCIE SZCZEGÓŁY" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold h-20"></textarea>
-                                        </div>
-                                        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                                            <input type="text" placeholder="TELEFON" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold" />
-                                            <input type="email" placeholder="EMAIL" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold" />
-                                            <input type="text" placeholder="STRONA WWW" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] font-bold" />
+                                        <div className="space-y-4 text-sm font-bold">
+                                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 italic">Szczegóły</h4>
+                                            <textarea placeholder="RODZAJ WSPARCIA" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] h-20"></textarea>
+                                            <textarea placeholder="WSPARCIE SZCZEGÓŁY" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-[#006B61] h-20"></textarea>
                                         </div>
                                     </div>
                                     <div className="p-8 border-t border-gray-100 bg-gray-50/50 flex gap-4">
-                                        <button onClick={() => setShowFundModal(false)} className="flex-1 py-4 rounded-2xl font-black uppercase text-[10px] text-gray-400 border-2 border-gray-200">Porzuć zmiany</button>
-                                        <button className="flex-[2] bg-[#006B61] text-white py-4 rounded-2xl font-black uppercase text-[10px] shadow-xl hover:bg-[#408670]">Zapisz w arkuszu Google</button>
+                                        <button onClick={() => setShowFundModal(false)} className="flex-1 py-4 rounded-2xl font-black uppercase text-[10px] text-gray-400 border-2 border-gray-200 hover:bg-white transition-all">Anuluj</button>
+                                        <button className="flex-[2] bg-[#006B61] text-white py-4 rounded-2xl font-black uppercase text-[10px] shadow-xl hover:bg-[#408670]">Zapisz w chmurze</button>
                                     </div>
                                 </div>
                             </div>

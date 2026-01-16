@@ -17,7 +17,7 @@
         
         body { font-family: 'Inter', sans-serif; background-color: #f8faf9; }
         
-        /* Czcionka Charm tylko dla nazw sekcji */
+        /* Czcionka Charm tylko dla DUŻYCH nazw sekcji na górze */
         .font-section-title { font-family: 'Charm', cursive; }
         
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
@@ -101,7 +101,7 @@
                                         </div>
                                     </div>
                                     <div className="bg-gray-50 p-6 rounded-[35px] space-y-3 flex flex-col justify-center border border-gray-100 text-xs">
-                                        <p className="font-black text-[#006B61] uppercase text-[10px] italic border-b pb-2 mb-2 italic">Kontakt:</p>
+                                        <p className="font-black text-[#006B61] uppercase text-[10px] italic border-b pb-2 mb-2 italic text-left">Kontakt:</p>
                                         <p className="flex items-center gap-3 font-bold text-gray-700"><i data-lucide="phone" className="w-4 h-4 text-[#408670]"></i> {fund.phone || '-'}</p>
                                         <p className="flex items-center gap-3 font-bold text-gray-700 truncate"><i data-lucide="mail" className="w-4 h-4 text-[#408670]"></i> {fund.email || '-'}</p>
                                         <a href={fund.web} target="_blank" className="block text-center bg-[#006B61] text-white p-4 rounded-2xl font-black uppercase text-[9px] mt-2 shadow-lg">WWW</a>
@@ -170,7 +170,7 @@
                                 <input type="text" placeholder="Wpisz treść..." value={tText} onChange={e=>setTText(e.target.value)} className="w-full bg-transparent border-b border-[#9DBD9A] p-2 outline-none text-sm placeholder:text-white/30" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[9px] uppercase font-bold text-teal-200 ml-1">Pacjent</label>
+                                <label className="text-[9px] uppercase font-bold text-teal-200 ml-1">Kogo dotyczy</label>
                                 <div className="flex gap-2">
                                     <select value={tPatient} onChange={e=>setTPatient(e.target.value)} className="flex-1 bg-teal-800 p-3 rounded-xl outline-none text-xs border-none font-bold">
                                         <option>Nie dotyczy pacjenta</option>
@@ -241,6 +241,8 @@
                 );
             }
 
+            const formattedDayName = now.toLocaleDateString('pl-PL', {weekday: 'long'}).charAt(0).toUpperCase() + now.toLocaleDateString('pl-PL', {weekday: 'long'}).slice(1);
+
             return (
                 <div className="min-h-screen flex">
                     <aside className="w-80 p-6 flex flex-col shrink-0">
@@ -270,7 +272,7 @@
                             </h1>
                             <div className="text-right panel-style p-8 min-w-[320px] flex flex-col justify-center">
                                 <p className="text-xl font-black text-[#006B61] uppercase tracking-[0.2em] leading-none mb-3">
-                                    {now.toLocaleDateString('pl-PL', {weekday: 'long'})}, {now.toLocaleDateString('pl-PL')}
+                                    {formattedDayName}, {now.toLocaleDateString('pl-PL')}
                                 </p>
                                 <p className="text-5xl font-black text-gray-400 tabular-nums tracking-tighter border-t pt-3 border-gray-100">
                                     {now.toLocaleTimeString('pl-PL')}
@@ -283,9 +285,9 @@
                             {page === 'funds' && <FundsPage funds={funds} loading={loadingFunds} setShowModal={setShowFundModal} refreshData={fetchFunds} />}
                             {page === 'patients' && (
                                 <div className="bg-white p-12 rounded-[50px] shadow-sm border border-gray-100 min-h-[500px]">
-                                    <div className="flex justify-between items-center mb-10"><h2 className="text-3xl font-black text-[#006B61] uppercase tracking-widest italic">Ewidencja</h2><button className="bg-[#006B61] text-white px-8 py-4 rounded-[25px] font-black text-[10px] uppercase shadow-xl hover:scale-105 transition-all">Dodaj pacjenta</button></div>
+                                    <div className="flex justify-between items-center mb-10"><h2 className="text-3xl font-black text-[#006B61] uppercase tracking-widest">Lista pacjentów</h2><button className="bg-[#006B61] text-white px-8 py-4 rounded-[25px] font-black text-[10px] uppercase shadow-xl hover:scale-105 transition-all">Dodaj pacjenta</button></div>
                                     <div className="relative mb-10"><i data-lucide="search" className="absolute left-6 top-5 w-5 h-5 text-gray-300"></i><input type="text" placeholder="Szukaj..." className="w-full bg-gray-50 p-5 pl-14 rounded-[25px] outline-none font-bold text-gray-600 shadow-inner border-none" /></div>
-                                    <p className="text-center text-gray-200 italic py-24 font-black tracking-widest opacity-20 text-6xl uppercase leading-none">Baza gotowa do połączenia</p>
+                                    <p className="text-center text-gray-200 italic py-24 font-black tracking-widest opacity-20 text-6xl uppercase leading-none italic font-bold">Baza gotowa do połączenia</p>
                                 </div>
                             )}
                             {['schedules', 'docs'].includes(page) && (

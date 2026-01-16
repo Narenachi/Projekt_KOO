@@ -42,8 +42,6 @@
         const { useState, useEffect } = React;
 
         const coordinators = ['Oliwia Giermanowska', 'Klaudia Iwaneczko', 'Emilia Jabłońska', 'Natalia Kopera', 'Anna Metlerska', 'Patrycja Szaton'];
-        
-        // --- NOWY LINK DO SKRYPTU ---
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxfOxVzFw7VPwY88WNySfn2Zo18STi8znNWyp2Rj-WfhYYu_Hg89_du84aaf-oEQkeBzg/exec";
 
         // --- KOMPONENT: PROGRAMY I FUNDACJE ---
@@ -172,7 +170,7 @@
                                 <input type="text" placeholder="Wpisz treść..." value={tText} onChange={e=>setTText(e.target.value)} className="w-full bg-transparent border-b border-[#9DBD9A] p-2 outline-none text-sm placeholder:text-white/30" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[9px] uppercase font-bold text-teal-200 ml-1">Pacjent</label>
+                                <label className="text-[9px] uppercase font-bold text-teal-200 ml-1">Kogo dotyczy</label>
                                 <div className="flex gap-2">
                                     <select value={tPatient} onChange={e=>setTPatient(e.target.value)} className="flex-1 bg-teal-800 p-3 rounded-xl outline-none text-xs border-none font-bold">
                                         <option>Nie dotyczy pacjenta</option>
@@ -281,7 +279,11 @@
                         </header>
 
                         <div className="animate-fadeIn">
-                            {page === 'home' && <HomePage onAddTask={(t,d,p,c)=>setTasks([...tasks,{id:Date.now(),text:t,date:d,patient:p,coord:c}])} onDeleteTask={id=>setTasks(tasks.filter(tk=>tk.id!==id))} />}
+                            {page === 'home' && <HomePage 
+                                tasks={tasks} 
+                                onAddTask={(t,d,p,c)=>setTasks([...tasks,{id:Date.now(),text:t,date:d,patient:p,coord:c}])} 
+                                onDeleteTask={id=>setTasks(tasks.filter(tk=>tk.id!==id))} 
+                            />}
                             {page === 'funds' && <FundsPage funds={funds} loading={loadingFunds} setShowModal={setShowFundModal} refreshData={fetchFunds} />}
                             {page === 'patients' && (
                                 <div className="bg-white p-12 rounded-[50px] shadow-sm border border-gray-100 min-h-[500px]">

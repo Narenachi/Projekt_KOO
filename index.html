@@ -15,58 +15,85 @@
 
     <script type="text/babel">
         const { useState, useEffect } = React;
-        const { Calendar, Phone, ClipboardList, Users, FileText, TrendingUp, CheckCircle, XCircle, Clock, Plus } = lucide;
+        const { Calendar, Phone, ClipboardList, Users, FileText, TrendingUp, CheckCircle, XCircle, Clock, Plus, Loader2 } = lucide;
 
         const App = () => {
             const [isLoggedIn, setIsLoggedIn] = useState(false);
+            const [isSyncing, setIsSyncing] = useState(false);
+            const [syncProgress, setSyncProgress] = useState(0);
             const [currentUser, setCurrentUser] = useState(null);
             const [password, setPassword] = useState('');
             const [selectedCoordinator, setSelectedCoordinator] = useState('');
+            const [currentTime, setCurrentTime] = useState(new Date());
 
-            const coordinators = ['GiermanowskaO', 'IwaneczkoK', 'JablonskaE', 'KoperaN', 'MetlerskaA', 'SzatonP'];
+            // Zegar aktualizowany co sekundę
+            useEffect(() => {
+                const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            // Obsługa ikon po każdej zmianie widoku
+            useEffect(() => {
+                lucide.createIcons();
+            });
 
             const handleLogin = () => {
                 if (password === 'PaniAlcer<3' && selectedCoordinator) {
-                    const btn = document.getElementById('login-btn');
-                    btn.innerText = "Logowanie...";
-                    setTimeout(() => {
-                        setCurrentUser(selectedCoordinator);
-                        setIsLoggedIn(true);
-                    }, 1000);
+                    setIsSyncing(true);
+                    let progress = 0;
+                    const interval = setInterval(() => {
+                        progress += 10;
+                        setSyncProgress(progress);
+                        if (progress >= 100) {
+                            clearInterval(interval);
+                            setCurrentUser(selectedCoordinator);
+                            setIsLoggedIn(true);
+                            setIsSyncing(false);
+                        }
+                    }, 150);
                 } else {
-                    alert('Nieprawidłowe hasło!');
+                    alert('Nieprawidłowe dane logowania!');
                 }
             };
 
-            // Inicjalizacja ikon Lucide po zalogowaniu
-            useEffect(() => {
-                if (isLoggedIn) {
-                    lucide.createIcons();
-                }
-            }, [isLoggedIn]);
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter') handleLogin();
+            };
+
+            if (isSyncing) {
+                return (
+                    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 text-center">
+                        <img src="./assets/DiLO.png" className="h-20 mb-8 animate-pulse" />
+                        <h2 className="text-xl font-semibold text-gray-700 mb-4">Synchronizacja z Google Drive...</h2>
+                        <div className="w-64 bg-gray-200 rounded-full h-2.5 mb-2">
+                            <div className="bg-teal-600 h-2.5 rounded-full transition-all duration-300" style={{width: `${syncProgress}%`}}></div>
+                        </div>
+                        <p className="text-sm text-gray-500">{syncProgress}%</p>
+                    </div>
+                );
+            }
 
             if (!isLoggedIn) {
                 return (
                     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-green-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
-                            {/* Ścieżka do logo - upewnij się, że assets jest w tym samym branchu co index.html */}
-                            <img 
-                                src="./assets/DiLO.png" 
-                                alt="Logo DiLO"
-                                className="h-24 mx-auto mb-6 block"
-                                onError={(e) => {
-                                    e.target.src = "https://images.seeklogo.com/logo-png/26/2/szybka-terapia-onkologiczna-logo-png_seeklogo-268047.png";
-                                }}
-                            />
-                            <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">Logowanie</h1>
-                            
+                        <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
+                            <img src="./assets/DiLO.png" alt="Logo" className="h-24 mx-auto mb-6 block" 
+                                 onError={(e) => e.target.src="https://images.seeklogo.com/logo-png/26/2/szybka-terapia-onkologiczna-logo-png_seeklogo-268047.png"} />
+                            <h1 className="text-2xl font-bold text-center text-gray-800 mb-8">Logowanie</h1>
                             <div className="space-y-4">
-                                <select onChange={(e) => setSelectedCoordinator(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-600 outline-none">
+                                <select onChange={(e) => setSelectedCoordinator(e.target.value)} 
+                                        className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-600 outline-none transition-all">
                                     <option value="">Wybierz koordynatora</option>
-                                    {coordinators.map(c => <option key={c} value={c}>{c}</option>)}
+                                    {['GiermanowskaO', 'IwaneczkoK', 'JablonskaE', 'KoperaN', 'MetlerskaA', 'SzatonP'].map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
-                                <input type="password" placeholder="Hasło" onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-600 outline-none" />
-                                <button id="login-btn" onClick={handleLogin} className="w-full bg-teal-700 text-white py-3 rounded-lg hover:bg-teal-800 transition-colors font-medium">Zaloguj się</button>
+                                <input type="password" placeholder="Hasło" 
+                                       onKeyPress={handleKeyPress}
+                                       onChange={(e) => setPassword(e.target.value)} 
+                                       className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-600 outline-none transition-all" />
+                                <button onClick={handleLogin} 
+                                        className="w-full bg-teal-700 text-white py-3 rounded-lg hover:bg-teal-800 transition-shadow font-bold shadow-lg">
+                                    Zaloguj się
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -75,48 +102,73 @@
 
             return (
                 <div className="min-h-screen bg-gray-50 flex">
-                    <div className="w-64 bg-white shadow-lg p-6 flex flex-col">
-                        <img src="./assets/DiLO.png" className="h-16 mx-auto mb-4" onError={(e) => e.target.style.display='none'} />
-                        <div className="text-center border-b pb-4 mb-4">
-                            <p className="text-xs text-gray-500 italic">Zalogowano jako:</p>
-                            <p className="font-bold text-teal-800">{currentUser}</p>
-                        </div>
-                        <nav className="flex-1 space-y-2">
-                            <div className="flex items-center gap-2 p-2 bg-teal-700 text-white rounded shadow-sm">
-                                <i data-lucide="calendar" className="w-4 h-4"></i> <span>Strona główna</span>
+                    {/* Panel Boczny */}
+                    <div className="w-64 bg-white shadow-xl flex flex-col z-10 border-r border-gray-100">
+                        <div className="p-6 border-b">
+                            <img src="./assets/DiLO.png" className="h-12 mx-auto mb-4" />
+                            <div className="text-center">
+                                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Koordynator</p>
+                                <p className="font-bold text-teal-800">{currentUser}</p>
                             </div>
-                            <p className="text-xs text-green-600 mt-4 px-2 italic">✓ Połączono z Google Drive</p>
-                        </nav>
-                        <button onClick={() => setIsLoggedIn(false)} className="mt-auto w-full py-2 bg-red-50 text-red-600 rounded text-sm hover:bg-red-100 transition-colors">Wyloguj się</button>
-                    </div>
-
-                    <div className="flex-1 p-8 overflow-auto">
-                        <header className="mb-8">
-                            <h1 className="text-3xl font-bold text-gray-800">Dzień dobry!</h1>
-                            <p className="text-gray-500">Dane zsynchronizowane z arkuszem STO_2026.xlsx</p>
-                        </header>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-teal-700">
-                                    <i data-lucide="phone"></i> Telefony do wykonania
-                                </h2>
-                                <div className="space-y-3">
-                                    <div className="p-3 bg-red-50 rounded-lg flex justify-between items-center border-l-4 border-red-500 text-sm">
-                                        <span>Jan Kowalski (123 456 789)</span>
-                                        <span className="font-bold">Zaległe</span>
-                                    </div>
-                                    <div className="p-3 bg-gray-50 rounded-lg flex justify-between items-center text-sm">
-                                        <span>Anna Nowak (987 654 321)</span>
-                                        <span>Dzisiaj</span>
-                                    </div>
+                        </div>
+                        <nav className="flex-1 p-4 space-y-2">
+                            <div className="flex items-center gap-3 p-3 bg-teal-50 text-teal-700 rounded-lg font-medium">
+                                <i data-lucide="calendar" className="w-5 h-5"></i>
+                                <span>Dashboard</span>
+                            </div>
+                            <div className="pt-4 px-3">
+                                <div className="flex items-center gap-2 text-green-600 text-sm font-semibold">
+                                    <span className="relative flex h-2 w-2">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                    </span>
+                                    Połączono z Google Drive
                                 </div>
                             </div>
+                        </nav>
+                        <div className="p-4 border-t">
+                            <button onClick={() => setIsLoggedIn(false)} className="w-full py-2 text-red-500 hover:bg-red-50 rounded transition-colors flex items-center justify-center gap-2 text-sm">
+                                <i data-lucide="x-circle" className="w-4 h-4"></i> Wyloguj się
+                            </button>
+                        </div>
+                    </div>
 
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center flex flex-col justify-center items-center">
-                                <i data-lucide="trending-up" className="w-12 h-12 text-teal-100 mb-2"></i>
-                                <p className="text-gray-400 text-sm italic">Pozostałe moduły zostaną załadowane po pełnej autoryzacji Dysku Google...</p>
+                    {/* Treść główna */}
+                    <div className="flex-1 p-8 overflow-auto">
+                        <header className="flex justify-between items-center mb-10 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-800">Witaj ponownie!</h1>
+                                <p className="text-gray-500 text-sm">Synchronizacja z chmurą: Arkusz_Pacjenci_2026.xlsx</p>
                             </div>
+                            <div className="text-right">
+                                <p className="text-lg font-bold text-teal-700">{currentTime.toLocaleTimeString('pl-PL')}</p>
+                                <p className="text-sm text-gray-500">{currentTime.toLocaleDateString('pl-PL', {weekday: 'long', day: 'numeric', month: 'long'})}</p>
+                            </div>
+                        </header>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                <h3 className="text-gray-400 text-sm font-bold uppercase mb-4 flex items-center gap-2">
+                                    <i data-lucide="phone" className="w-4 h-4"></i> Do obdzwonienia
+                                </h3>
+                                <p className="text-3xl font-bold text-gray-800">0</p>
+                                <p className="text-xs text-green-500 mt-2 font-medium">✓ Wszystkie zadania wykonane</p>
+                            </div>
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                <h3 className="text-gray-400 text-sm font-bold uppercase mb-4 flex items-center gap-2">
+                                    <i data-lucide="users" className="w-4 h-4"></i> Aktywni pacjenci
+                                </h3>
+                                <p className="text-3xl font-bold text-gray-800">12</p>
+                                <p className="text-xs text-gray-400 mt-2 italic font-medium underline">Pokaż listę z arkusza</p>
+                            </div>
+                        </div>
+
+                        <div className="mt-10 bg-teal-900 rounded-3xl p-10 text-white relative overflow-hidden shadow-2xl">
+                            <div className="relative z-10">
+                                <h2 className="text-3xl font-bold mb-4 italic text-teal-100">"W onkologii liczy się czas."</h2>
+                                <p className="text-teal-200 opacity-80">System koordynacji STO zapewnia płynny przepływ informacji między lekarzem a pacjentem.</p>
+                            </div>
+                            <i data-lucide="trending-up" className="absolute right-[-20px] bottom-[-20px] w-64 h-64 text-white opacity-5"></i>
                         </div>
                     </div>
                 </div>

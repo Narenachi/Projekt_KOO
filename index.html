@@ -15,8 +15,6 @@
         .font-title { font-family: 'Playfair Display', serif; }
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .btn-filter { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .btn-filter:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(0, 107, 97, 0.2); }
     </style>
 </head>
 <body>
@@ -26,59 +24,99 @@
         const { useState, useEffect } = React;
 
         const coordinators = ['WSZYSCY', 'Oliwia Giermanowska', 'Klaudia Iwaneczko', 'Emilia Jabłońska', 'Natalia Kopera', 'Anna Metlerska', 'Patrycja Szaton'];
+        
+        // --- KONFIGURACJA ---
+        const SCRIPT_URL = "TU_WKLEJ_TWOJ_URL_Z_EXEC";
+
+        // --- KOMPONENT: FUNDACJE (DANE Z ARKUSZA) ---
+        const FundsPage = () => {
+            const [funds, setFunds] = useState([]);
+            const [search, setSearch] = useState('');
+            const [loading, setLoading] = useState(true);
+
+            useEffect(() => {
+                fetch(SCRIPT_URL)
+                    .then(res => res.json())
+                    .then(data => {
+                        setFunds(data);
+                        setLoading(false);
+                    })
+                    .catch(err => {
+                        console.error("Błąd:", err);
+                        setLoading(false);
+                    });
+            }, []);
+
+            useEffect(() => { lucide.createIcons(); }, [funds, loading]);
+
+            const filtered = funds.filter(f => 
+                (f.name && f.name.toLowerCase().includes(search.toLowerCase())) || 
+                (f.cancerType && f.cancerType.toLowerCase().includes(search.toLowerCase()))
+            );
+
+            if (loading) return (
+                <div className="flex flex-col items-center justify-center h-64 animate-pulse">
+                    <div className="w-12 h-12 border-4 border-[#006B61] border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <p className="text-[#006B61] font-black uppercase tracking-widest text-xs">Pobieranie danych z arkusza...</p>
+                </div>
+            );
+
+            return (
+                <div className="animate-fadeIn space-y-6 text-gray-700">
+                    <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
+                        <h2 className="text-5xl font-title italic text-[#006B61] tracking-tighter mb-6 underline decoration-[#C9D9B6]">Programy i fundacje</h2>
+                        <div className="relative">
+                            <i data-lucide="search" className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 w-5 h-5"></i>
+                            <input type="text" placeholder="Szukaj po nazwie fundacji lub typie nowotworu..." className="w-full bg-gray-50 p-5 pl-14 rounded-[25px] outline-none focus:ring-2 focus:ring-[#006B61] font-bold text-gray-600 border-none" onChange={(e) => setSearch(e.target.value)} />
+                        </div>
+                    </div>
+                    {filtered.map((fund, idx) => (
+                        <div key={idx} className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden p-8 grid grid-cols-1 md:grid-cols-3 gap-8 hover:shadow-md transition-all">
+                            <div className="md:col-span-2">
+                                <span className="text-[9px] font-black bg-[#C9D9B6] text-[#006B61] px-3 py-1 rounded-full uppercase mb-2 inline-block font-bold">{fund.type || "Program/Fundacja"}</span>
+                                <h3 className="text-2xl font-black text-gray-800 mb-4 tracking-tight">{fund.name}</h3>
+                                <div className="space-y-4 text-sm leading-relaxed">
+                                    <p><strong className="text-[#006B61] uppercase text-[10px] tracking-widest block mb-1">Zakres wsparcia:</strong> {fund.support}</p>
+                                    <p><strong className="text-[#006B61] uppercase text-[10px] tracking-widest block mb-1">Dla kogo:</strong> {fund.age} | <span className="text-[#408670] font-bold">{fund.cancerType}</span></p>
+                                    <p className="text-gray-400 italic text-xs">{fund.details}</p>
+                                </div>
+                            </div>
+                            <div className="bg-gray-50 p-6 rounded-[35px] space-y-3 flex flex-col justify-center">
+                                <p className="font-black text-[#006B61] uppercase text-[10px] tracking-widest border-b border-[#C9D9B6] pb-2 mb-2">Dane kontaktowe:</p>
+                                <p className="flex items-center gap-3 font-bold text-sm"><i data-lucide="phone" className="w-4 h-4 text-[#408670]"></i> {fund.phone}</p>
+                                <p className="flex items-center gap-3 font-bold text-sm truncate"><i data-lucide="mail" className="w-4 h-4 text-[#408670]"></i> {fund.email}</p>
+                                <a href={fund.web} target="_blank" className="block text-center bg-[#006B61] text-white p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest mt-4 hover:bg-[#408670] transition-all">Strona WWW</a>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
 
         // --- KOMPONENT: HARMONOGRAMY ---
         const SchedulesPage = () => {
-            const [filterType, setFilterType] = useState(null); // 'coord', 'patient', 'staff'
-
-            useEffect(() => { lucide.createIcons(); }, [filterType]);
-
+            const [type, setType] = useState(null);
+            useEffect(() => { lucide.createIcons(); }, [type]);
             return (
                 <div className="animate-fadeIn space-y-10">
-                    <div className="bg-white p-12 rounded-[50px] shadow-sm border border-gray-100">
-                        <h2 className="text-4xl font-title italic text-[#006B61] tracking-tighter mb-10 text-center">Wybierz kategorię harmonogramu</h2>
-                        
+                    <div className="bg-white p-12 rounded-[50px] shadow-sm border border-gray-100 text-center">
+                        <h2 className="text-5xl font-title italic text-[#006B61] tracking-tighter mb-10 underline decoration-[#C9D9B6]">Harmonogramy</h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <button onClick={() => setFilterType('coord')} 
-                                className={`btn-filter p-8 rounded-[35px] border-2 flex flex-col items-center gap-4 ${filterType === 'coord' ? 'border-[#006B61] bg-[#006B61] text-white' : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-[#9DBD9A]'}`}>
-                                <i data-lucide="users" className="w-8 h-8"></i>
-                                <span className="font-black text-xs uppercase tracking-widest">Koordynatorzy</span>
-                            </button>
-                            <button onClick={() => setFilterType('patient')} 
-                                className={`btn-filter p-8 rounded-[35px] border-2 flex flex-col items-center gap-4 ${filterType === 'patient' ? 'border-[#006B61] bg-[#006B61] text-white' : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-[#9DBD9A]'}`}>
-                                <i data-lucide="user" className="w-8 h-8"></i>
-                                <span className="font-black text-xs uppercase tracking-widest">Pacjenci</span>
-                            </button>
-                            <button onClick={() => setFilterType('staff')} 
-                                className={`btn-filter p-8 rounded-[35px] border-2 flex flex-col items-center gap-4 ${filterType === 'staff' ? 'border-[#006B61] bg-[#006B61] text-white' : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-[#9DBD9A]'}`}>
-                                <i data-lucide="briefcase" className="w-8 h-8"></i>
-                                <span className="font-black text-xs uppercase tracking-widest">Personel medyczny</span>
-                            </button>
+                            {[{id:'coord', l:'Koordynatorzy', i:'users'}, {id:'patient', l:'Pacjenci', i:'user'}, {id:'staff', l:'Personel medyczny', i:'briefcase'}].map(b => (
+                                <button key={b.id} onClick={() => setType(b.id)} className={`p-8 rounded-[35px] border-2 flex flex-col items-center gap-4 transition-all ${type === b.id ? 'bg-[#006B61] text-white' : 'bg-gray-50 text-gray-500 hover:border-[#9DBD9A]'}`}>
+                                    <i data-lucide={b.i} className="w-8 h-8"></i>
+                                    <span className="font-black text-[10px] uppercase tracking-widest">{b.l}</span>
+                                </button>
+                            ))}
                         </div>
-
-                        {/* SEKCJA FILTRÓW DYNAMICZNYCH */}
-                        {filterType && (
-                            <div className="mt-12 p-8 bg-gray-50 rounded-[40px] border border-gray-100 animate-fadeIn">
-                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6 ml-2 text-center">Szczegóły filtrowania</h3>
-                                <div className="max-w-md mx-auto">
-                                    {filterType === 'coord' && (
-                                        <select className="w-full p-4 border-2 border-white bg-white rounded-2xl font-bold text-[#006B61] outline-none shadow-sm focus:border-[#006B61]">
-                                            {coordinators.map(c => <option key={c}>{c}</option>)}
-                                        </select>
-                                    )}
-                                    {filterType === 'patient' && (
-                                        <input type="text" placeholder="Wpisz nazwisko lub PESEL pacjenta..." className="w-full p-4 border-2 border-white bg-white rounded-2xl font-bold text-[#006B61] outline-none shadow-sm focus:border-[#006B61]" />
-                                    )}
-                                    {filterType === 'staff' && (
-                                        <select className="w-full p-4 border-2 border-white bg-white rounded-2xl font-bold text-[#006B61] outline-none shadow-sm focus:border-[#006B61]">
-                                            <option>Wybierz specjalizację / medyka</option>
-                                            <option>Onkolog kliniczny</option>
-                                            <option>Chirurg onkolog</option>
-                                            <option>Radioterapeuta</option>
-                                        </select>
-                                    )}
-                                    <button className="w-full mt-4 bg-[#006B61] text-white p-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg active:scale-95 transition-all">Pokaż harmonogram</button>
-                                </div>
+                        {type && (
+                            <div className="mt-12 max-w-md mx-auto animate-fadeIn p-8 bg-gray-50 rounded-[35px] border border-gray-100">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 italic">Wybierz szczegóły:</p>
+                                <select className="w-full p-4 border-2 rounded-2xl font-bold text-[#006B61] outline-none focus:border-[#006B61] bg-white">
+                                    <option>Wybierz z listy...</option>
+                                    {type === 'coord' && coordinators.map(c => <option key={c}>{c}</option>)}
+                                </select>
+                                <button className="w-full mt-4 bg-[#006B61] text-white p-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg">Pokaż grafik</button>
                             </div>
                         )}
                     </div>
@@ -87,91 +125,53 @@
         };
 
         // --- KOMPONENT: STRONA GŁÓWNA ---
-        const HomePage = ({ tasks, onAddTask, onDeleteTask, user }) => {
+        const HomePage = ({ tasks, onAddTask, onDeleteTask }) => {
             const [tText, setTText] = useState('');
             const [tDate, setTDate] = useState('');
             const [tPatient, setTPatient] = useState('Nie dotyczy pacjenta');
             const [tCoord, setTCoord] = useState('WSZYSCY');
             const days = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'];
-
             useEffect(() => { lucide.createIcons(); });
-
             return (
                 <div className="space-y-10 animate-fadeIn">
                     <section className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
-                        <h2 className="flex items-center gap-2 font-black text-[#006B61] mb-8 uppercase text-xs tracking-widest">
-                            <i data-lucide="phone" className="w-5 h-5"></i> Połączenia (najbliższe 7 dni)
-                        </h2>
+                        <h2 className="flex items-center gap-2 font-black text-[#006B61] mb-8 uppercase text-[10px] tracking-widest"><i data-lucide="phone" className="w-4 h-4"></i> Połączenia (najbliższe 7 dni)</h2>
                         <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
                             {days.map(day => (
-                                <div key={day} className="flex flex-col gap-3 border-r last:border-none border-gray-100 px-2 min-h-[150px]">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase text-center pb-2">{day}</p>
-                                    <div className="text-[9px] text-gray-300 italic text-center py-4">Brak zaplanowanych połączeń</div>
+                                <div key={day} className="border-r last:border-none px-2 text-center">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase mb-2">{day}</p>
+                                    <div className="py-8 text-gray-200 italic text-[9px]">Brak danych</div>
                                 </div>
                             ))}
                         </div>
                     </section>
-
                     <section className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
-                        <h2 className="flex items-center gap-2 font-black text-[#006B61] mb-8 uppercase text-xs tracking-widest">
-                            <i data-lucide="calendar" className="w-5 h-5"></i> Wizyty (najbliższe 7 dni)
-                        </h2>
+                        <h2 className="flex items-center gap-2 font-black text-[#006B61] mb-8 uppercase text-[10px] tracking-widest"><i data-lucide="calendar" className="w-4 h-4"></i> Wizyty (najbliższe 7 dni)</h2>
                         <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
                             {days.map(day => (
-                                <div key={day} className="flex flex-col gap-3 border-r last:border-none border-gray-100 px-2 min-h-[150px]">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase text-center pb-2">{day}</p>
-                                    <div className="text-[9px] text-gray-200 italic text-center py-4">Brak wizyt</div>
+                                <div key={day} className="border-r last:border-none px-2 text-center">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase mb-2">{day}</p>
+                                    <div className="py-8 text-gray-200 italic text-[9px]">Brak wizyt</div>
                                 </div>
                             ))}
                         </div>
                     </section>
-
                     <section className="bg-[#006B61] p-10 rounded-[50px] text-white shadow-2xl">
-                        <h2 className="flex items-center gap-2 font-black mb-8 uppercase text-xs tracking-widest text-[#C9D9B6]">
-                            <i data-lucide="clipboard-list" className="w-5 h-5"></i> Zadania do wykonania (Najbliższy miesiąc)
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-10 bg-white/10 p-6 rounded-3xl border border-white/10 shadow-inner">
-                            <div className="md:col-span-2 space-y-2">
-                                <label className="text-[9px] uppercase font-bold text-teal-200 ml-1">Treść zadania</label>
-                                <input type="text" placeholder="Co trzeba zrobić?" value={tText} onChange={e=>setTText(e.target.value)} className="w-full bg-transparent border-b border-[#9DBD9A] p-2 text-sm outline-none placeholder:text-white/40" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[9px] uppercase font-bold text-teal-200 ml-1">Koordynator</label>
-                                <select value={tCoord} onChange={e=>setTCoord(e.target.value)} className="w-full bg-teal-800 text-white text-xs p-2 rounded-lg outline-none border-none">
-                                    {coordinators.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[9px] uppercase font-bold text-teal-200 ml-1">Pacjent</label>
-                                <select value={tPatient} onChange={e=>setTPatient(e.target.value)} className="w-full bg-teal-800 text-white text-xs p-2 rounded-lg outline-none border-none">
-                                    <option>Nie dotyczy pacjenta</option>
-                                    <option>KAŻDY</option>
-                                </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[9px] uppercase font-bold text-teal-200 ml-1">Termin</label>
-                                <div className="flex gap-2">
-                                    <input type="date" value={tDate} onChange={e=>setTDate(e.target.value)} className="bg-transparent border-b border-[#9DBD9A] p-1 text-xs outline-none flex-1" />
-                                    <button onClick={()=>{onAddTask(tText, tDate, tPatient, tCoord); setTText(''); setTDate('');}} className="bg-[#C9D9B6] text-[#006B61] font-black p-2 rounded-xl uppercase text-[10px] hover:bg-white transition-all shadow-lg">
-                                        <i data-lucide="plus" className="w-4 h-4"></i>
-                                    </button>
-                                </div>
+                        <h2 className="flex items-center gap-2 font-black mb-8 uppercase text-[10px] tracking-widest text-[#C9D9B6]"><i data-lucide="clipboard-list" className="w-4 h-4"></i> Zadania do wykonania (Miesiąc)</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-8 bg-white/10 p-6 rounded-3xl border border-white/10">
+                            <input type="text" placeholder="Treść..." value={tText} onChange={e=>setTText(e.target.value)} className="md:col-span-2 bg-transparent border-b border-[#9DBD9A] p-2 outline-none" />
+                            <select value={tCoord} onChange={e=>setTCoord(e.target.value)} className="bg-teal-800 p-2 rounded-lg outline-none text-[10px]">{coordinators.map(c => <option key={c}>{c}</option>)}</select>
+                            <select value={tPatient} onChange={e=>setTPatient(e.target.value)} className="bg-teal-800 p-2 rounded-lg outline-none text-[10px]"><option>Nie dotyczy pacjenta</option><option>KAŻDY</option></select>
+                            <div className="flex gap-2">
+                                <input type="date" value={tDate} onChange={e=>setTDate(e.target.value)} className="bg-transparent border-b border-[#9DBD9A] flex-1 outline-none text-[10px]" />
+                                <button onClick={()=>{onAddTask(tText,tDate,tPatient,tCoord); setTText(''); setTDate('');}} className="bg-[#C9D9B6] text-[#006B61] p-2 rounded-xl font-black">+</button>
                             </div>
                         </div>
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             {tasks.map(t => (
-                                <div key={t.id} className="bg-white/5 border border-white/10 p-6 rounded-3xl flex justify-between items-center group transition-all">
-                                    <div>
-                                        <div className="flex gap-3 mb-2">
-                                            <span className="text-[9px] font-black bg-teal-900 px-3 py-1 rounded-full text-teal-100 uppercase tracking-widest border border-teal-600">Termin: {t.date}</span>
-                                            <span className="text-[9px] font-black bg-white/10 px-3 py-1 rounded-full text-white uppercase tracking-widest border border-white/10">Koordynator: {t.coord}</span>
-                                        </div>
-                                        <p className="font-bold text-lg leading-tight group-hover:text-teal-200 transition-colors">{t.text}</p>
-                                        <p className="text-[10px] font-bold text-[#9DBD9A] mt-2 uppercase tracking-tighter">Pacjent: {t.patient}</p>
-                                    </div>
-                                    <button onClick={()=>{onDeleteTask(t.id)}} className="bg-[#408670] px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-[#006B61] transition-all shadow-lg">
-                                        <i data-lucide="check" className="w-3 h-3 inline mr-1"></i> Wykonano
-                                    </button>
+                                <div key={t.id} className="bg-white/5 border border-white/10 p-5 rounded-3xl flex justify-between items-center group">
+                                    <div><p className="text-[10px] font-black text-teal-200 uppercase mb-1 tracking-widest">{t.date} | {t.coord}</p><p className="font-bold text-lg">{t.text}</p><p className="text-[10px] text-teal-400 font-bold uppercase mt-1 italic">Pacjent: {t.patient}</p></div>
+                                    <button onClick={()=>onDeleteTask(t.id)} className="bg-[#408670] px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-white hover:text-[#006B61] transition-all shadow-md">Wykonano</button>
                                 </div>
                             ))}
                         </div>
@@ -188,125 +188,66 @@
             const [tasks, setTasks] = useState([]);
             const [now, setNow] = useState(new Date());
 
-            const coordinatorsMap = {
-                'GiermanowskaO': 'Oliwia Giermanowska', 'IwaneczkoK': 'Klaudia Iwaneczko',
-                'JablonskaE': 'Emilia Jabłońska', 'KoperaN': 'Natalia Kopera',
-                'MetlerskaA': 'Anna Metlerska', 'SzatonP': 'Patrycja Szaton'
-            };
+            const coordsMap = {'GiermanowskaO':'Oliwia Giermanowska','IwaneczkoK':'Klaudia Iwaneczko','JablonskaE':'Emilia Jabłońska','KoperaN':'Natalia Kopera','MetlerskaA':'Anna Metlerska','SzatonP':'Patrycja Szaton'};
 
-            useEffect(() => {
-                const timer = setInterval(() => setNow(new Date()), 1000);
-                return () => clearInterval(timer);
-            }, []);
-
+            useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
             useEffect(() => { lucide.createIcons(); }, [isLoggedIn, page, tasks]);
-
-            const formatDate = (date) => {
-                const dayName = date.toLocaleDateString('pl-PL', { weekday: 'long' });
-                const dayDate = date.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                const time = date.toLocaleTimeString('pl-PL');
-                return { dayName, dayDate, time };
-            };
 
             if (!isLoggedIn) {
                 return (
                     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
                         <div className="bg-white p-12 rounded-[50px] shadow-2xl w-full max-w-sm text-center border-b-[12px] border-[#006B61]">
                             <img src="./assets/DiLO.png" className="h-16 mx-auto mb-10" />
-                            <select id="ls" className="w-full p-4 border-2 border-gray-100 rounded-2xl mb-4 font-bold outline-none bg-gray-50 focus:border-[#006B61] transition-all">
-                                <option value="">Wybierz Login</option>
-                                {Object.keys(coordinatorsMap).map(l => <option key={l} value={l}>{l}</option>)}
-                            </select>
-                            <input id="ps" type="password" placeholder="Hasło" className="w-full p-4 border-2 border-gray-100 rounded-2xl mb-8 font-bold outline-none bg-gray-50 focus:border-[#006B61] transition-all" />
-                            <button onClick={() => {
-                                const l = document.getElementById('ls').value;
-                                if(l && document.getElementById('ps').value === 'PaniAlcer<3') {
-                                    setUser(coordinatorsMap[l]); setIsLoggedIn(true);
-                                } else alert('Błąd!');
-                            }} className="w-full bg-[#006B61] text-white p-5 rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">Zaloguj się</button>
+                            <select id="ls" className="w-full p-4 border-2 border-gray-100 rounded-2xl mb-4 font-bold outline-none bg-gray-50 focus:border-[#006B61]">{Object.keys(coordsMap).map(l => <option key={l} value={l}>{l}</option>)}</select>
+                            <input id="ps" type="password" placeholder="Hasło" className="w-full p-4 border-2 border-gray-100 rounded-2xl mb-8 font-bold outline-none bg-gray-50 focus:border-[#006B61]" />
+                            <button onClick={() => { if(document.getElementById('ps').value === 'PaniAlcer<3') { setUser(coordsMap[document.getElementById('ls').value]); setIsLoggedIn(true); } else { alert('Nieprawidłowe hasło!'); } }} className="w-full bg-[#006B61] text-white p-5 rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">Zaloguj się</button>
                         </div>
                     </div>
                 );
             }
 
-            const timeData = formatDate(now);
-
             return (
                 <div className="min-h-screen flex">
                     <aside className="w-80 bg-white shadow-xl flex flex-col border-r border-gray-50">
-                        <div className="p-10 border-b text-center bg-gray-50/20">
-                            <img src="./assets/DiLO.png" className="h-10 mx-auto mb-4" />
-                            <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-1 italic">Koordynator:</p>
-                            <p className="font-black text-[#006B61] leading-tight text-sm tracking-tight">{user}</p>
-                        </div>
-                        <nav className="flex-1 p-8 space-y-4">
-                            {[
-                                { id: 'home', label: 'Strona główna', icon: 'trending-up' },
-                                { id: 'patients', label: 'Baza pacjentów', icon: 'users' },
-                                { id: 'schedules', label: 'Harmonogramy', icon: 'calendar' },
-                                { id: 'docs', label: 'Dokumenty', icon: 'file-text' },
-                                { id: 'funds', label: 'Fundacje', icon: 'heart' }
-                            ].map(i => (
-                                <div key={i.id} onClick={() => setPage(i.id)} className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all font-black text-[10px] uppercase tracking-widest ${page === i.id ? 'bg-[#006B61] text-white shadow-lg shadow-teal-900/10' : 'text-gray-400 hover:bg-[#C9D9B6]/10 hover:text-[#006B61]'}`}>
-                                    <i data-lucide={i.icon} className="w-4 h-4"></i> {i.label}
-                                </div>
+                        <div className="p-10 border-b text-center"><img src="./assets/DiLO.png" className="h-10 mx-auto mb-4" /><p className="font-black text-[#006B61] leading-tight text-sm italic">{user}</p></div>
+                        <nav className="flex-1 p-8 space-y-4 font-black text-[10px] uppercase tracking-widest">
+                            {[ {id:'home',l:'Strona główna',i:'trending-up'}, {id:'patients',l:'Baza pacjentów',i:'users'}, {id:'schedules',l:'Harmonogramy',i:'calendar'}, {id:'docs',l:'Dokumenty',i:'file-text'}, {id:'funds',l:'Fundacje',i:'heart'} ].map(i => (
+                                <div key={i.id} onClick={() => setPage(i.id)} className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all ${page === i.id ? 'bg-[#006B61] text-white shadow-lg shadow-teal-900/10' : 'text-gray-400 hover:bg-[#C9D9B6]/10 hover:text-[#006B61]'}`}><i data-lucide={i.i} className="w-4 h-4"></i> {i.l}</div>
                             ))}
                         </nav>
                         <button onClick={()=>setIsLoggedIn(false)} className="m-8 p-4 text-red-400 font-black text-[9px] uppercase border-2 border-red-50 rounded-2xl hover:bg-red-50 transition-all font-bold">Wyloguj się</button>
                     </aside>
-
                     <main className="flex-1 p-12 overflow-auto">
                         <header className="flex justify-between items-center mb-12">
-                            <h1 className="text-5xl font-title italic text-gray-800 tracking-tighter">
-                                {page === 'home' ? 'Strona główna' : page === 'patients' ? 'Baza pacjentów' : page === 'schedules' ? 'Harmonogramy' : page === 'docs' ? 'Dokumentacja' : 'Fundacje'}
-                            </h1>
-                            <div className="text-right bg-white py-4 px-8 rounded-3xl shadow-sm border border-gray-50 border-b-4 border-[#006B61]">
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 leading-none">{timeData.dayName}</p>
-                                <p className="text-sm font-black text-[#006B61] uppercase tracking-tighter tabular-nums">
-                                    {timeData.dayDate}, {timeData.time}
-                                </p>
+                            <h1 className="text-6xl font-title italic text-gray-800 tracking-tighter uppercase">{page === 'home' ? 'Strona główna' : page === 'patients' ? 'Baza pacjentów' : page === 'funds' ? 'Fundacje' : page === 'schedules' ? 'Harmonogramy' : 'Dokumentacja'}</h1>
+                            <div className="text-right bg-white py-4 px-8 rounded-3xl shadow-sm border border-b-4 border-[#006B61]">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 italic">{now.toLocaleDateString('pl-PL', {weekday: 'long'})}</p>
+                                <p className="text-sm font-black text-[#006B61] uppercase tabular-nums tracking-tighter">{now.toLocaleDateString('pl-PL')}, {now.toLocaleTimeString('pl-PL')}</p>
                             </div>
                         </header>
-
                         {page === 'home' && <HomePage user={user} tasks={tasks} onAddTask={(t,d,p,c)=>setTasks([...tasks,{id:Date.now(),text:t,date:d,patient:p,coord:c}])} onDeleteTask={id=>setTasks(tasks.filter(tk=>tk.id!==id))} />}
-                        
+                        {page === 'funds' && <FundsPage />}
+                        {page === 'schedules' && <SchedulesPage />}
                         {page === 'patients' && (
                             <div className="bg-white p-12 rounded-[50px] shadow-sm border border-gray-100 animate-fadeIn min-h-[500px]">
                                 <div className="flex justify-between items-center mb-10">
                                     <h2 className="text-4xl font-title italic text-[#006B61] tracking-tighter">Ewidencja pacjentów</h2>
-                                    <button className="bg-[#006B61] text-white px-8 py-4 rounded-[25px] font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-105 transition-all">Dodaj nowego pacjenta</button>
+                                    <button className="bg-[#006B61] text-white px-8 py-4 rounded-[25px] font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-105 transition-all shadow-teal-900/20">Dodaj nowego pacjenta</button>
                                 </div>
                                 <div className="relative mb-10">
                                     <i data-lucide="search" className="absolute left-6 top-5 w-5 h-5 text-gray-300"></i>
                                     <input type="text" placeholder="Szukaj po nazwisku lub nr DiLO..." className="w-full bg-gray-50 p-5 pl-14 rounded-[25px] outline-none focus:ring-2 focus:ring-[#006B61] font-bold text-gray-600 border-none shadow-inner" />
                                 </div>
-                                <p className="text-center text-gray-200 italic py-24 font-black tracking-widest opacity-20 text-5xl uppercase">System gotowy do importu</p>
+                                <p className="text-center text-gray-200 italic py-24 font-black tracking-widest opacity-20 text-6xl uppercase leading-none">Baza gotowa<br/>do importu danych</p>
                             </div>
                         )}
-                        
-                        {page === 'schedules' && <SchedulesPage />}
-                        
                         {page === 'docs' && (
-                            <div className="bg-white p-12 rounded-[50px] shadow-sm border border-gray-100 animate-fadeIn">
-                                <h2 className="text-4xl font-title italic text-[#006B61] tracking-tighter mb-10 text-center">Generator Dokumentów</h2>
-                                <div className="max-w-xl mx-auto space-y-8">
-                                    <div className="space-y-3">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Wybierz szablon</label>
-                                        <select className="w-full p-5 bg-gray-50 border-2 border-gray-50 rounded-[25px] font-bold outline-none focus:border-[#006B61] shadow-sm">
-                                            <option>Raport Miesięczny Koordynatora</option>
-                                            <option>Wniosek o Konsylium DiLO</option>
-                                            <option>Zgoda pacjenta STO</option>
-                                        </select>
-                                    </div>
-                                    <button className="w-full bg-[#006B61] text-white py-6 rounded-[25px] font-black uppercase text-xs tracking-[0.2em] shadow-2xl hover:bg-[#408670] transition-all">Generuj Dokument</button>
-                                </div>
-                            </div>
+                            <div className="bg-white p-12 rounded-[50px] shadow-sm border text-center animate-fadeIn"><h2 className="text-4xl font-title italic text-[#006B61] mb-10 underline decoration-[#C9D9B6]">Dokumentacja</h2><div className="max-w-md mx-auto space-y-4"><select className="w-full p-4 bg-gray-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-[#006B61]"><option>Wniosek o Konsylium DiLO</option><option>Raport Miesięczny</option></select><button className="w-full bg-[#006B61] text-white p-6 rounded-[25px] font-black uppercase text-xs shadow-xl shadow-teal-900/20">Generuj dokument</button></div></div>
                         )}
                     </main>
                 </div>
             );
         };
-
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>

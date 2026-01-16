@@ -1,200 +1,103 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Koordynacji Medycznej</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-</head>
-<body class="bg-gray-50">
-    <div id="root"></div>
+// --- 2. SEKCJA: BAZA PACJENTÓW (Widok + Dodawanie) ---
+const PatientsPage = () => {
+    const [showModal, setShowModal] = useState(false);
+    const [search, setSearch] = useState('');
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        const { Calendar, Phone, ClipboardList, Users, FileText, TrendingUp, CheckCircle, XCircle, Clock, Plus, Loader2 } = lucide;
+    // Przykładowe dane (docelowo z Google Sheets)
+    const [patientsData, setPatientsData] = useState([
+        { id: 1, name: 'Jan Kowalski', pesel: '80010112345', dilo: 'D/123/2025', status: 'Diagnostyka' },
+        { id: 2, name: 'Anna Nowak', pesel: '92051254321', dilo: 'D/456/2025', status: 'Konsylium' }
+    ]);
 
-        // KONFIGURACJA GOOGLE SHEETS (TUTAJ WPISZ SWOJE DANE, ŻEBY PRZETESTOWAĆ PRAWDZIWE POŁĄCZENIE)
-        const CONFIG = {
-            API_KEY: 'TUTAJ_WPISZ_TWÓJ_KLUCZ_API', 
-            SHEET_ID: 'TUTAJ_WPISZ_ID_ARKUSZA',
-            RANGE: 'Arkusz1!A2:E20' 
-        };
+    return (
+        <div className="animate-fadeIn space-y-6">
+            {/* Nagłówek sekcji z przyciskiem dodawania */}
+            <div className="flex justify-between items-center bg-white p-6 rounded-3xl shadow-sm border">
+                <div>
+                    <h2 className="text-2xl font-black text-gray-800 uppercase tracking-tighter">Baza Pacjentów</h2>
+                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Zsynchronizowano z Google Drive</p>
+                </div>
+                <button 
+                    onClick={() => setShowModal(true)}
+                    className="bg-teal-700 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-teal-800 transition-all"
+                >
+                    <i data-lucide="plus" className="w-4 h-4"></i> Dodaj Pacjenta
+                </button>
+            </div>
 
-        const App = () => {
-            const [isLoggedIn, setIsLoggedIn] = useState(false);
-            const [isSyncing, setIsSyncing] = useState(false);
-            const [syncProgress, setSyncProgress] = useState(0);
-            const [isDataLoaded, setIsDataLoaded] = useState(false);
-            const [patients, setPatients] = useState([]); // Tu wylądują dane z Dysku
-            const [currentUser, setCurrentUser] = useState({ login: '', fullName: '' });
-            const [password, setPassword] = useState('');
-            const [selectedLogin, setSelectedLogin] = useState('');
-            const [currentTime, setCurrentTime] = useState(new Date());
+            {/* Wyszukiwarka */}
+            <div className="relative">
+                <i data-lucide="search" className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5"></i>
+                <input 
+                    type="text" 
+                    placeholder="Szukaj po nazwisku, PESEL lub nr DiLO..." 
+                    className="w-full pl-12 pr-6 py-4 bg-white rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-teal-600 outline-none font-medium"
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+            </div>
 
-            const coordinatorsMap = {
-                'GiermanowskaO': 'Oliwia Giermanowska',
-                'IwaneczkoK': 'Klaudia Iwaneczko',
-                'JablonskaE': 'Emilia Jabłońska',
-                'KoperaN': 'Natalia Kopera',
-                'MetlerskaA': 'Anna Metlerska',
-                'SzatonP': 'Patrycja Szaton'
-            };
+            {/* Tabela pacjentów */}
+            <div className="bg-white rounded-3xl shadow-sm border overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                    <thead className="bg-gray-50 border-b">
+                        <tr>
+                            <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Pacjent</th>
+                            <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">PESEL</th>
+                            <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Nr DiLO</th>
+                            <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                            <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Akcja</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                        {patientsData.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).map(p => (
+                            <tr key={p.id} className="hover:bg-teal-50/30 transition-colors">
+                                <td className="p-4 font-bold text-gray-800">{p.name}</td>
+                                <td className="p-4 text-sm text-gray-500 tabular-nums">{p.pesel}</td>
+                                <td className="p-4 text-sm font-black text-teal-700">{p.dilo}</td>
+                                <td className="p-4">
+                                    <span className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-[10px] font-black uppercase tracking-tighter">
+                                        {p.status}
+                                    </span>
+                                </td>
+                                <td className="p-4 text-right">
+                                    <button className="text-gray-300 hover:text-teal-600"><i data-lucide="file-text" className="w-5 h-5"></i></button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
 
-            useEffect(() => {
-                const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-                return () => clearInterval(timer);
-            }, []);
-
-            useEffect(() => { lucide.createIcons(); });
-
-            // FUNKCJA POBIERAJĄCA DANE Z GOOGLE SHEETS
-            const fetchDataFromGoogleSheets = async () => {
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${CONFIG.RANGE}?key=${CONFIG.API_KEY}`;
-                
-                try {
-                    const response = await fetch(url);
-                    const result = await response.json();
-                    
-                    if (result.values) {
-                        // Jeśli połączenie zadziała, mapujemy dane z tabeli na obiekty
-                        const mappedData = result.values.map((row, index) => ({
-                            id: index,
-                            patient: row[0], // Kolumna A
-                            phone: row[1],   // Kolumna B
-                            status: row[2]   // Kolumna C
-                        }));
-                        setPatients(mappedData);
-                        return true;
-                    }
-                } catch (error) {
-                    console.error("Błąd połączenia z Google Drive:", error);
-                }
-                return false; // Zwraca false, jeśli nie ma kluczy lub jest błąd
-            };
-
-            const handleLogin = async () => {
-                if (password === 'PaniAlcer<3' && selectedLogin) {
-                    setIsSyncing(true);
-                    let progress = 0;
-                    
-                    const interval = setInterval(async () => {
-                        progress += 10;
-                        setSyncProgress(progress);
-                        
-                        if (progress >= 100) {
-                            clearInterval(interval);
-                            
-                            // TEST POŁĄCZENIA
-                            const success = await fetchDataFromGoogleSheets();
-                            
-                            setCurrentUser({ login: selectedLogin, fullName: coordinatorsMap[selectedLogin] });
-                            setIsLoggedIn(true);
-                            setIsSyncing(false);
-                            if (success) setIsDataLoaded(true);
-                        }
-                    }, 150);
-                } else {
-                    alert('Nieprawidłowe dane logowania!');
-                }
-            };
-
-            const handleKeyPress = (e) => { if (e.key === 'Enter') handleLogin(); };
-
-            if (isSyncing) {
-                return (
-                    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
-                        <img src="./assets/DiLO.png" className="h-20 mb-8 animate-bounce" onError={(e) => e.target.src="https://images.seeklogo.com/logo-png/26/2/szybka-terapia-onkologiczna-logo-png_seeklogo-268047.png"}/>
-                        <h2 className="text-xl font-bold text-gray-700">Testowanie połączenia...</h2>
-                        <div className="w-64 bg-gray-100 rounded-full h-3 mt-4 overflow-hidden border">
-                            <div className="bg-teal-600 h-full transition-all duration-200" style={{width: `${syncProgress}%`}}></div>
+            {/* MODAL: DODAWANIE PACJENTA */}
+            {showModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl p-10 animate-scaleUp">
+                        <div className="flex justify-between items-center mb-8">
+                            <h3 className="text-xl font-black text-gray-800 uppercase">Nowa Karta Pacjenta</h3>
+                            <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-red-500"><i data-lucide="x-circle"></i></button>
                         </div>
-                    </div>
-                );
-            }
-
-            if (!isLoggedIn) {
-                return (
-                    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-green-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md border-t-4 border-teal-700">
-                            <img src="./assets/DiLO.png" alt="Logo" className="h-24 mx-auto mb-6 block" onError={(e) => e.target.src="https://images.seeklogo.com/logo-png/26/2/szybka-terapia-onkologiczna-logo-png_seeklogo-268047.png"} />
-                            <h1 className="text-2xl font-bold text-center mb-8">Logowanie</h1>
-                            <div className="space-y-4">
-                                <select onChange={(e) => setSelectedLogin(e.target.value)} className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-600 outline-none">
-                                    <option value="">Wybierz koordynatora</option>
-                                    {Object.entries(coordinatorsMap).map(([login, name]) => (<option key={login} value={login}>{name}</option>))}
-                                </select>
-                                <input type="password" placeholder="Hasło" onKeyPress={handleKeyPress} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-600 outline-none" />
-                                <button onClick={handleLogin} className="w-full bg-teal-700 text-white py-3 rounded-lg font-bold shadow-lg">Zaloguj się</button>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Imię i Nazwisko</label>
+                                <input type="text" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-teal-600 font-bold" placeholder="np. Marek Nowak" />
                             </div>
-                        </div>
-                    </div>
-                );
-            }
-
-            return (
-                <div className="min-h-screen bg-gray-50 flex">
-                    <div className="w-72 bg-white shadow-xl flex flex-col border-r border-gray-100">
-                        <div className="p-8 border-b text-center">
-                            <img src="./assets/DiLO.png" className="h-12 mx-auto mb-4" />
-                            <p className="font-extrabold text-teal-900 leading-tight">{currentUser.fullName}</p>
-                        </div>
-                        <nav className="flex-1 p-4 space-y-2">
-                            <div className="flex items-center gap-3 p-3 bg-teal-700 text-white rounded-xl shadow-md">
-                                <i data-lucide="calendar" className="w-5 h-5"></i>
-                                <span className="font-medium">Dashboard</span>
-                            </div>
-                            
-                            <div className={`mt-6 px-3 py-3 rounded-xl border ${isDataLoaded ? 'bg-green-50 border-green-100 text-green-700' : 'bg-orange-50 border-orange-100 text-orange-700'}`}>
-                                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                                    <span className={`h-2 w-2 rounded-full ${isDataLoaded ? 'bg-green-500 animate-ping' : 'bg-orange-500'}`}></span>
-                                    {isDataLoaded ? 'Połączono z Google Drive' : 'Tryb Offline (Brak kluczy API)'}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">PESEL</label>
+                                    <input type="text" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-teal-600 font-bold" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Nr DiLO</label>
+                                    <input type="text" className="w-full p-4 bg-gray-50 border rounded-2xl outline-none focus:border-teal-600 font-bold" placeholder="D/___/2026" />
                                 </div>
                             </div>
-                        </nav>
-                        <button onClick={() => {setIsLoggedIn(false); setIsDataLoaded(false);}} className="m-4 py-3 text-red-500 hover:bg-red-50 rounded-xl transition-all flex items-center justify-center gap-2 text-xs font-black uppercase">
-                            <i data-lucide="x-circle" className="w-4 h-4"></i> Wyloguj się
-                        </button>
-                    </div>
-
-                    <div className="flex-1 p-10 overflow-auto">
-                        <header className="flex justify-between items-center mb-10 bg-white p-8 rounded-[32px] shadow-sm border border-gray-100">
-                            <div>
-                                <h1 className="text-3xl font-black text-gray-800 tracking-tight tracking-tight">Witaj, {currentUser.fullName.split(' ')[0]}!</h1>
-                                <p className="text-gray-500 text-sm mt-1">Status bazy: {isDataLoaded ? 'Zsynchronizowano z Arkuszem' : 'Korzystanie z danych testowych'}</p>
-                            </div>
-                            <div className="bg-gray-50 px-6 py-3 rounded-2xl border border-gray-100 text-right">
-                                <p className="text-2xl font-black text-teal-800 tabular-nums">{currentTime.toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'})}</p>
-                            </div>
-                        </header>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                            <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100">
-                                <h3 className="text-gray-400 text-xs font-black uppercase tracking-widest mb-6">Lista pacjentów z arkusza</h3>
-                                {patients.length > 0 ? (
-                                    <div className="space-y-3">
-                                        {patients.map(p => (
-                                            <div key={p.id} className="flex justify-between p-3 bg-gray-50 rounded-lg">
-                                                <span className="font-bold">{p.patient}</span>
-                                                <span className="text-teal-600">{p.phone}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="text-sm text-gray-400 italic text-center py-10">Wprowadź klucze API w kodzie, aby załadować prawdziwe dane...</p>
-                                )}
-                            </div>
+                            <button className="w-full bg-teal-700 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-lg mt-4 hover:bg-teal-800">
+                                Zapisz i Wyślij na Dysk
+                            </button>
                         </div>
                     </div>
                 </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+            )}
+        </div>
+    );
+};

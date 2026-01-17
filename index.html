@@ -60,14 +60,14 @@
 
         const coordinators = ['Oliwia Giermanowska', 'Klaudia Iwaneczko', 'Emilia Jabłońska', 'Natalia Kopera', 'Anna Metlerska', 'Patrycja Szaton'];
         
-        // --- API URL (WERSJA 14) ---
+        // --- TWOJE API (Backend Wersja 14) ---
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxfOxVzFw7VPwY88WNySfn2Zo18STi8znNWyp2Rj-WfhYYu_Hg89_du84aaf-oEQkeBzg/exec";
 
-        // --- KOMPONENT: POP-UP SZCZEGÓŁÓW DNIA (ZAMIAST PANELU BOCZNEGO) ---
+        // --- KOMPONENT: POP-UP SZCZEGÓŁÓW DNIA (Zapobiega Crashom) ---
         const DayDetailsModal = ({ date, events, onClose }) => {
             if (!date) return null;
             
-            // Bezpieczne filtrowanie godzin (zabezpieczenie przed brakiem danych)
+            // Bezpieczne filtrowanie danych (nawet jak przyjdą puste)
             const safeEvents = Array.isArray(events) ? events : [];
             const morning = safeEvents.filter(e => { try { return parseInt(String(e.hours).split(':')[0]) < 12; } catch { return true; } });
             const afternoon = safeEvents.filter(e => { try { return parseInt(String(e.hours).split(':')[0]) >= 12; } catch { return false; } });
@@ -240,7 +240,7 @@
             );
         };
 
-        // --- FUNDACJE (Z NOWYMI KOLUMNAMI) ---
+        // --- FUNDACJE (Z NOWYMI KOLUMNAMI I OCHRONĄ) ---
         const FundsPage = ({ funds, loading, setShowModal, refreshData }) => { 
             const [search, setSearch] = useState(''); 
             const [activeTab, setActiveTab] = useState('fundacje'); 

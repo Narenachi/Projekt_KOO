@@ -60,10 +60,10 @@
 
         const coordinators = ['Oliwia Giermanowska', 'Klaudia Iwaneczko', 'Emilia Jabłońska', 'Natalia Kopera', 'Anna Metlerska', 'Patrycja Szaton'];
         
-        // --- TWOJE API (Backend Wersja 14) ---
+        // --- API URL (Wersja 16) ---
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxfOxVzFw7VPwY88WNySfn2Zo18STi8znNWyp2Rj-WfhYYu_Hg89_du84aaf-oEQkeBzg/exec";
 
-        // --- KOMPONENT: POP-UP SZCZEGÓŁÓW DNIA (Zapobiega Crashom) ---
+        // --- KOMPONENT: POP-UP SZCZEGÓŁÓW DNIA (ZAMIAST PANELU BOCZNEGO) ---
         const DayDetailsModal = ({ date, events, onClose }) => {
             if (!date) return null;
             
@@ -240,7 +240,7 @@
             );
         };
 
-        // --- FUNDACJE (Z NOWYMI KOLUMNAMI I OCHRONĄ) ---
+        // --- FUNDACJE (Z NOWYMI KOLUMNAMI) ---
         const FundsPage = ({ funds, loading, setShowModal, refreshData }) => { 
             const [search, setSearch] = useState(''); 
             const [activeTab, setActiveTab] = useState('fundacje'); 
